@@ -32,7 +32,7 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(8,11),(10,12)],[(8,12),(9,13)],[(16,8),(20,9)],
             [(16,6),(17,8)],[(11,6),(16,7)],
             [(8,6),(11,9)],[(6,5),(10,6)],[(6,7),(7,10)],
-            [(1,7),(6,8),[(4,5),(5,7)],[(1,1),(2,7)],
+            [(1,7),(6,8)],[(4,5),(5,7)],[(1,1),(2,7)],
             [(2,1),(9,2)],[(8,2),(9,4)],[(9,3),(13,4)],
             [(3,3),(6,4)],[(6,3),(7,5)],[(12,1),(13,3)],
             [(12,0),(15,1)],[(14,1),(15,6)],[(11,4),(13,5)]]
@@ -40,7 +40,7 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
 
 
 ### Classes
-class Wall:
+class Wall(object):
     def __init__(self, topLeft, bottomRight):
         #topLeft and bottomRight are tuples (x,y)
         self.top = topLeft[1]
@@ -55,22 +55,59 @@ class Wall:
         self.left -= dy
 
 class Cannon(Wall):
-    def init(self, topLeft, bottomRight, direction):
+    def __init__(self, topLeft, bottomRight, direction):
         super().__init__(topLeft, bottomRight)
         self.direction = direction
         
-        
+class Bullet(object):
+    #some of the code for the bullet class is taken from hw11
+    # Model
+    def __init__(self, cx, cy, angle, speed):
+        # A bullet has a position, a size, a direction, and a speed
+        self.cx = cx
+        self.cy = cy
+        self.r = 5
+        self.angle = angle
+        self.speed = speed
+    
+    # View
+    def draw(self, canvas):
+        canvas.create_oval(self.cx - self.r, self.cy - self.r, 
+                           self.cx + self.r, self.cy + self.r,
+                           fill="white", outline=None)
 
-class Player:
-    def __init__(self, avatar, x, y, size):
-        self.avatar = avatar
+    # Controller
+    def moveBullet(self):
+        # Move according to the original trajectory
+        self.cx += math.cos(math.radians(self.angle))*self.speed
+        self.cy -= math.sin(math.radians(self.angle))*self.speed
+
+    def collidesWithWall(self, other):
+        # Check if the bullet and wall overlap at all
+        if(not isinstance(other, Wall)): # Other must be a Wall
+            return False
+        else:
+            dist = ((other.cx - self.cx)**2 + (other.cy - self.cy)**2)**0.5
+            return dist < self.r + other.r
+            
+    def collidesWithPlayer(self, other):
+        # Check if the bullet and player overlap at all
+        if(not isinstance(other, Player)): # Other must be a Player
+            return False
+        else:
+            dist = ((other.x - self.cx)**2 + (other.y - self.cy)**2)**0.5
+            return dist < self.r + other.r
+
+class Player(object):
+    def __init__(self, x, y, size):
+        # self.avatar = avatar
         self.speed = 40
         self.r = size
         self.x = x
         self.y = y
         
     
-class Button:
+class Button(object):
     def __init__(self, name, cx, cy, color):
         self.color = color
         self.name = name
@@ -106,8 +143,8 @@ def init(data):
     data.cY = data.height//data.pixel//2
     data.buttonColor = "green"
     data.clickColor = "red"
-    data.player = Player(avatar, data.cX, data.cY, data.pixel/2)
-    data.playButton = Button("PLAY", data.width//2, 3*data.height//5,\
+    data.player = Player(data.cX, data.cY, data.pixel/2)
+    data.playButton = Button("PLAY", data.width/2, 3*data.height//5,\
                             data.buttonColor)
     data.menuButton = Button("MENU", data.width//2, 4*data.height//5, \
                                 data.buttonColor)
@@ -251,13 +288,11 @@ def menuRedrawAll(canvas, data):
 
 def hitsWall(data):
     for wallBlock in data.walls:
-        #hit from the left (block is on the right of the player)
+        #hit from the left,right,below,above respectively
+        #right-->(block is on the right of the player)
         if wallBlock.left < data.player.x + data.player.size < wallBlock.right\
-        #hit from the right
         or wallBlock.left < data.player.x - data.player.size < wallBlock.right\
-        #hit from below
         or wallBlock.top < data.player.y - data.player.size < wallBlock.bottom\
-        #hit from above
         or wallBlock.top < data.player.y + data.player.size < wallBlock.bottom:
             return True
     return False
