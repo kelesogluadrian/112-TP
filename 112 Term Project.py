@@ -184,6 +184,7 @@ def redrawAll(canvas, data):
     
     
 ### Start Mode
+"""title, menu, play """
 def startMousePressed(event, data):
     if data.playButton.left>event.x>data.playButton.right and\
      data.playButton.bottom>event.y>data.playButton.top:
@@ -217,8 +218,14 @@ def startRedrawAll(canvas, data):
 
 
 ### Game Mode
+"""pressing the pause button or press p will pause the game
+also there should be powerups along the way"""
 def gameMousePressed(event, data):
-    pass
+    if data.pauseButton.left>event.x>data.pauseButton.right and\
+     data.pauseButton.bottom>event.y>data.pauseButton.top:
+        data.pauseButton.color = data.clickColor
+        data.mode = "pause"
+        data.playButton.color = data.buttonColor
 
 def gameKeyPressed(event, data):
     if event.keysym == "Up":
@@ -245,6 +252,8 @@ def gameKeyPressed(event, data):
         data.directionY = 0
         movePlayer(1, 0, data)
         
+    if event.keysym == "p"
+        
 def gameTimerFired(data):
     pass
     
@@ -259,6 +268,11 @@ def gameRedrawAll(canvas, data):
     drawPauseButton(data.pauseButton, canvas, data)
     
 ### Pause Mode
+"""menu, quit buttons, also when you press the pause button again(or press p)
+you go back to playing
+
+"""
+
 def pauseMousePressed(event, data):
     pass
 
@@ -272,6 +286,7 @@ def pauseRedrawAll(canvas, data):
     pass
 
 ### Menu Mode
+"""different players to choose from, settings (and powerups) """
 def menuMousePressed(event, data):
     pass
 
@@ -324,7 +339,7 @@ def drawPlayer(canvas, data):
 
 
 ### Run Function
-
+#from 112 website
 def run(width=300, height=300):
     def redrawAllWrapper(canvas, data):
         canvas.delete(ALL)
