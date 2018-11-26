@@ -1,5 +1,5 @@
 ### Levels
-#todo: write the coordinates of the wall blocks
+
 #levels are 2D lists that have topLeft and bottomRight of the blocks
 level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(17,43),(18,44)],
@@ -18,14 +18,14 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(22,27),(23,31)],[(22,27),(25,28)],[(25,26),(27,27)],
             [(26,22),(27,27)],[(22,22),(26,23)],[(23,25),(24,26)],
             [(20,22),(22,25)],[(18,28),(21,29)],[(19,26),(21,29)],
-            [(20,25),(21,26)],[(17,26),(18,27)],[(9,24),(12,26)],
+            [(17,26),(18,27)],[(9,24),(12,26)],[(9,17),(12,18)],
             [(15,28),(17,29)],[(16,29),(17,30)],[(16,30),(18,33)],
             [(12,25),(15,26)],[(14,26),(15,28)],[(8,22),(11,23)],
             [(18,23),(19,25)],[(12,22),(15,23)],[(13,21),(15,24)],
             [(16,23),(17,25)],[(15,23),(16,24)],[(16,20),(17,22)],
             [(17,21),(21,22)],[(14,12),(16,20)],[(11,19),(21,20)],
             [(12,21),(11,20)],[(9,19),(10,22)],[(16,17),(17,20)],
-            [(6,19),(9,20)],[(6,13),(7,19)],[(7,13),(9,14)],[(9,17),(12,18)],
+            [(6,19),(9,20)],[(6,13),(7,19)],[(7,13),(9,14)],
             [(10,14),(11,17)],[(12,12),(14,13)],[(20,8),(21,19)],
             [(19,12),(20,14)],[(18,15),(19,18)],[(17,11),(18,16)],
             [(14,10),(19,11)],[(12,8),(15,10)],[(6,10),(13,11)],
@@ -36,6 +36,20 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(2,1),(9,2)],[(8,2),(9,4)],[(9,3),(13,4)],
             [(3,3),(6,4)],[(6,3),(7,5)],[(12,1),(13,3)],
             [(12,0),(15,1)],[(14,1),(15,6)],[(11,4),(13,5)]]
+
+level1Cannons = [ [(14,41),(15,42),(0,-1)],[(2,25),(3,26),(0,1)],
+                [(8,30),(9,31),(1,0)],[(8,32),(9,33),(1,0)],
+                [(16,30),(17,31),(-1,0)],[(16,32),(17,33),(-1,0)],
+                [(17,26),(18,27),(0,-1)],[(23,25),(24,26),(1,0)],
+                [(23,25),(24,26),(0,-1)],[(6,14),(7,15),(1,0)],
+                [(6,16),(7,17),(1,0)],[(14,14),(15,15),(-1,0)],
+                [(14,16),(15,17),(-1,0)],[(19,13),(20,14),(-1,0)],
+                [(11,6),(12,7),(0,-1)],[(12,6),(13,7),(0,1)],
+                [(14,6),(15,7),(0,1)],[(3,3),(4,4),(0,1)],
+                [(13,9),(14,10),(0,1)]]
+                
+#todo: put coordinates for powerups
+
 
 
 
@@ -59,15 +73,23 @@ class Cannon(Wall):
         super().__init__(topLeft, bottomRight)
         self.direction = direction
         
+    def makeBullet(self):
+        # Generates a bullet heading in the direction the cannon is facing
+        offset = 21 #data.pixel/2 + 1 (plus something)
+        x = self.cx + offset*self.direction[0]
+        y = self.cy - offset*self.direction[1]
+        
+        return Bullet(x, y, self.direction) 
+        
 class Bullet(object):
     #some of the code for the bullet class is taken from hw11
     # Model
-    def __init__(self, cx, cy, angle, speed):
-        # A bullet has a position, a size, a direction, and a speed
+    def __init__(self, cx, cy, direction):
+        # A bullet has a position, a size, a direction
         self.cx = cx
         self.cy = cy
         self.r = 5
-        self.angle = angle
+        self.direction = direction
         self.speed = speed
     
     # View
@@ -79,8 +101,8 @@ class Bullet(object):
     # Controller
     def moveBullet(self):
         # Move according to the original trajectory
-        self.cx += math.cos(math.radians(self.angle))*self.speed
-        self.cy -= math.sin(math.radians(self.angle))*self.speed
+        self.cx += self.direction[0]*self.speed
+        self.cy -= self.direction[1]*self.speed
 
     def collidesWithWall(self, other):
         # Check if the bullet and wall overlap at all
@@ -89,7 +111,7 @@ class Bullet(object):
         else:
             dist = ((other.cx - self.cx)**2 + (other.cy - self.cy)**2)**0.5
             return dist < self.r + other.r
-            
+
     def collidesWithPlayer(self, other):
         # Check if the bullet and player overlap at all
         if(not isinstance(other, Player)): # Other must be a Player
@@ -129,13 +151,16 @@ class PauseButton(Button):
 from tkinter import *
 
 def init(data):
-    data.walls = []
+    data.timerCount = 0
+    data.walls = level1
+    data.bullets = []
+    data.cannons = level1Cannons
     data.mode = "start"
     data.pixel = 40 #the unit length in the game
     data.margin = 10 # margin for the pause button
     # and scrollY
     #todo: figure out correct sX and sY to start player in middle of screen
-    #todo: and at the bottom of the map
+    #todo:                                      and at the bottom of the map
     data.sX = 0
     data.sY = 0
     #center coordinates for the player
@@ -218,8 +243,7 @@ def startRedrawAll(canvas, data):
 
 
 ### Game Mode
-"""pressing the pause button or press p will pause the game
-also there should be powerups along the way"""
+"""also there should be powerups along the way"""
 def gameMousePressed(event, data):
     if data.pauseButton.left>event.x>data.pauseButton.right and\
      data.pauseButton.bottom>event.y>data.pauseButton.top:
@@ -252,10 +276,26 @@ def gameKeyPressed(event, data):
         data.directionY = 0
         movePlayer(1, 0, data)
         
-    if event.keysym == "p"
+    if event.keysym == "p":
+        data.mode = "pause"
+    
         
 def gameTimerFired(data):
-    pass
+    data.timerCount += 1
+    
+    if data.timerCount % 5 = 0:
+    #from hw11
+        for cannon in data.cannons:
+            data.bullets.append(cannon.makeBullet())
+    #from hw11
+    for bullet in data.bullets:
+        bullet.moveBullet()
+        if bullet.isOffscreen(data.width, data.height):
+            #no need to keep track of off-screen bullets
+            data.bullets.remove(bullet)
+        for wall in data.walls:
+            if bullet.collidesWithWall(wall):
+                data.bullets.remove(bullet)
     
 def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left, pauseButton.top, \
@@ -264,6 +304,7 @@ def drawPauseButton(pauseButton, canvas, data):
 
 def gameRedrawAll(canvas, data):
     drawWalls(canvas, data)
+    drawCannons(canvas, data)
     drawPlayer(canvas, data)
     drawPauseButton(data.pauseButton, canvas, data)
     
