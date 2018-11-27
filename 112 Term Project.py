@@ -1,3 +1,5 @@
+from tkinter import *
+
 ### Levels
 
 #levels are 2D lists that have topLeft and bottomRight of the blocks
@@ -127,16 +129,64 @@ class Player(object):
         self.r = size
         self.x = x
         self.y = y
+
+def getPlayerLocation(player):
+    return player.x, player.y
         
+class Enemy(Player):
+    def __init__(self, x, y, size):
+        super().__init__(x, y, size)
     
+    
+    
+    def findPath(self, moves=None):
+        #todo: finish this method
+        #this will return a list of moves needed to get to the player
+        #backtracking template taken from 112 website
+        if moves == None:
+            moves = []
+            
+        if moves[-1] == getPlayerLocation(player):
+            return moves
+            
+        nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
+        for move in nextSteps:
+            self.moveEnemyLocation(self, nextSteps[0], nextSteps[1])
+            moves.append((self.x, self.y))
+            if not enemyHitsWall(self, data):
+                tmpSolution = findPath(self, moves)
+                if tmpSolution != None:
+                    return tmpSolution
+                moves.remove((self.x, self.y))
+        return None
+
+    def moveEnemyLocation(self, dx, dy, data):
+        #todo: this
+        self.x += dx*data.pixel
+        self.y -= dy*data.pixel
+
+def enemyHitsWall(enemy, data):
+    for wallBlock in data.walls:
+        #hit from the left,right,below,above respectively
+        #right-->(block is on the right of the enemy)
+        if wallBlock.left < enemy.x + enemy.size < wallBlock.right\
+        or wallBlock.left < enemy.x - enemy.size < wallBlock.right\
+        or wallBlock.top < enemy.y - enemy.size < wallBlock.bottom\
+        or wallBlock.top < enemy.y + enemy.size < wallBlock.bottom:
+            return True
+    return False
+
+#todo: use tkinter.Button instead of these
 class Button(object):
     def __init__(self, name, cx, cy, color):
+        self.cx = cx
+        self.cy = cy
         self.color = color
         self.name = name
-        self.top = cy-10
-        self.left = cx-30
-        self.bottom = cy+10
-        self.right = cx+30
+        self.top = self.cy-10
+        self.left = self.cx-30
+        self.bottom = self.cy+10
+        self.right = self.cx+30
         
 class PauseButton(Button):
     def __init__(self, cx, cy, color):
@@ -148,7 +198,6 @@ class PauseButton(Button):
 
 
 ### Graphics
-from tkinter import *
 
 def init(data):
     data.timerCount = 0
@@ -169,17 +218,24 @@ def init(data):
     data.buttonColor = "green"
     data.clickColor = "red"
     data.player = Player(data.cX, data.cY, data.pixel/2)
+    data.enemy = Enemy(data.cX, data.cY, data.pixel/2)
     data.playButton = Button("PLAY", data.width/2, 3*data.height//5,\
                             data.buttonColor)
-    data.menuButton = Button("MENU", data.width//2, 4*data.height//5, \
-                                data.buttonColor)
+    data.menuButton = Button("MENU", data.width//2, 4*data.height//5,\
+                            data.buttonColor)
     data.pauseButton = PauseButton(data.width-data.margin-(data.pixel/2),\
                                 data.margin+data.pixel/2, data.buttonColor)
     
 def movePlayer(dx, dy, data):
     #move bit by bit, not until it hits a wall
+    
     data.sX += dx*data.pixel
     data.sY -= dy*data.pixel
+    
+    if hitsWall(data):
+        data.sX -= dx*data.pixel
+        data.sY += dy*data.pixel
+        
 
 ### Mode Dispatcher
 def mousePressed(event,data):
@@ -228,8 +284,9 @@ def startTimerFired(data):
     
 def drawPlayButton(playButton, canvas, data):
     size = 30
-    canvas.create_rectangle(playButton.left, playButton.top, playButton.right,\
-                            playButton.bottom, fill=data.playButton.color)
+    canvas.create_rectangle(data.playButton.left, data.playButton.top,\
+                    data.playButton.right,data.playButton.bottom,\
+                    fill=data.playButton.color)
 
 def drawMenuButton(menuButton, canvas, data):
     size = 30
@@ -254,26 +311,18 @@ def gameMousePressed(event, data):
 def gameKeyPressed(event, data):
     if event.keysym == "Up":
         moveWalls(data, 0, -1)
-        data.directionX = 0
-        data.directionY = -1
         movePlayer(0, -1, data)
         
     if event.keysym == "Down":
         moveWalls(data, 0, 1)
-        data.directionX = 0
-        data.directionY = 1
         movePlayer(0, 1, data)
         
     if event.keysym == "Left":
         moveWalls(data, -1, 0)
-        data.directionX = -1
-        data.directionY = 0
         movePlayer(-1, 0, data)   
              
     if event.keysym == "Right":
         moveWalls(data, 1, 0)
-        data.directionX = 1
-        data.directionY = 0
         movePlayer(1, 0, data)
         
     if event.keysym == "p":
@@ -283,7 +332,7 @@ def gameKeyPressed(event, data):
 def gameTimerFired(data):
     data.timerCount += 1
     
-    if data.timerCount % 5 = 0:
+    if data.timerCount % 5 == 0:
     #from hw11
         for cannon in data.cannons:
             data.bullets.append(cannon.makeBullet())
@@ -296,6 +345,13 @@ def gameTimerFired(data):
         for wall in data.walls:
             if bullet.collidesWithWall(wall):
                 data.bullets.remove(bullet)
+    
+    if data.timerCount % 4 == 0:
+        path = data.enemy.findPath()
+        data.enemy.x += path[0][0]
+        data.enemy.y -= path[0][1]
+        
+        
     
 def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left, pauseButton.top, \
@@ -352,6 +408,8 @@ def hitsWall(data):
         or wallBlock.top < data.player.y + data.player.size < wallBlock.bottom:
             return True
     return False
+
+
     
 def createWalls(data):
     #todo: define a level chooser, like a mode dispatcher?
@@ -374,9 +432,9 @@ def drawPlayer(canvas, data):
     #placeholder for now
     #TODO: define images, or shapes for the player and replace the rect
     canvas.create_rectangle(data.player.x - data.pixel/2,\
-            data.player.y - data.pixel/2,\
-            data.player.x + data.pixel/2,\
-            data.player.y + data.pixel/2)
+                            data.player.y - data.pixel/2,\
+                            data.player.x + data.pixel/2,\
+                            data.player.y + data.pixel/2)
 
 
 ### Run Function
