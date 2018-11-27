@@ -1,4 +1,5 @@
 from tkinter import *
+import time
 
 ### Levels
 
@@ -267,12 +268,12 @@ def redrawAll(canvas, data):
 ### Start Mode
 """title, menu, play """
 def startMousePressed(event, data):
-    if data.playButton.left>event.x>data.playButton.right and\
+    if data.playButton.left<event.x<data.playButton.right and\
      data.playButton.bottom>event.y>data.playButton.top:
         data.playButton.color = data.clickColor
         data.mode = "game"
         data.playButton.color = data.buttonColor
-    elif data.menuButton.left>event.x>data.menuButton.right and\
+    elif data.menuButton.left<event.x<data.menuButton.right and\
      data.menuButton.bottom>event.y>data.menuButton.top:
         data.mode = "menu"
 
@@ -374,13 +375,15 @@ def pauseMousePressed(event, data):
     pass
 
 def pauseKeyPressed(event, data):
-    pass
+    if event.keysym == "p":
+        data.mode = "game"
     
 def pauseTimerFired(data):
     pass
     
 def pauseRedrawAll(canvas, data):
-    pass
+    canvas.create_rectangle(0,0,data.width, data.height,fill="light grey")
+    canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED")
 
 ### Menu Mode
 """different players to choose from, settings (and powerups) """
@@ -419,13 +422,13 @@ def createWalls(data):
 def drawWalls(canvas,data):
     for wallBlock in data.walls:
         canvas.create_rectangle(data.pixel*(data.sX + wallBlock.left),\
-        data.pixel*(data.sY + wallBlock.top),\
-        data.pixel*(data.sX + wallBlock.right), \
-        data.pixel*(data.sY + wallBlock.bottom), fill ="green")
+                        data.pixel*(data.sY + wallBlock.top),\
+                        data.pixel*(data.sX + wallBlock.right), \
+                        data.pixel*(data.sY + wallBlock.bottom), fill ="green")
 
 def moveWalls(data, dx, dy):
     for wallBlock in data.walls:
-        time.sleep(0.1) #the delayed motion
+        #time.sleep(0.1) #the delayed motion
         wallBlock.moveWall(dx, dy)
     
 def drawPlayer(canvas, data):
