@@ -188,6 +188,8 @@ class Button(object):
         self.left = self.cx-30
         self.bottom = self.cy+10
         self.right = self.cx+30
+
+#play = tk.button()
         
 class PauseButton(Button):
     def __init__(self, cx, cy, color):
@@ -196,13 +198,15 @@ class PauseButton(Button):
         self.left = cx-self.size
         self.bottom = cy+self.size
         self.right = cx+self.size
+        self.color = color
 
 
 ### Graphics
 
 def init(data):
     data.timerCount = 0
-    data.walls = level1
+    data.lvl = level1
+    data.walls=[]
     data.bullets = []
     data.cannons = level1Cannons
     data.mode = "start"
@@ -211,12 +215,12 @@ def init(data):
     # and scrollY
     #todo: figure out correct sX and sY to start player in middle of screen
     #todo:                                      and at the bottom of the map
-    data.sX = 0
-    data.sY = 0
+    data.sX = 90
+    data.sY = 100
     #center coordinates for the player
     data.cX = data.width//data.pixel//2
     data.cY = data.height//data.pixel//2
-    data.buttonColor = "green"
+    data.buttonColor = "blue"
     data.clickColor = "red"
     data.player = Player(data.cX, data.cY, data.pixel/2)
     data.enemy = Enemy(data.cX, data.cY, data.pixel/2)
@@ -285,14 +289,18 @@ def startTimerFired(data):
     
 def drawPlayButton(playButton, canvas, data):
     size = 30
-    canvas.create_rectangle(data.playButton.left, data.playButton.top,\
-                    data.playButton.right,data.playButton.bottom,\
+    canvas.create_rectangle(playButton.left, playButton.top,\
+                    playButton.right,playButton.bottom,\
                     fill=data.playButton.color)
+    canvas.create_text((playButton.left+playButton.right)/2,\
+                (playButton.top+playButton.bottom)/2,text="PLAY", fill="white")
 
 def drawMenuButton(menuButton, canvas, data):
     size = 30
     canvas.create_rectangle(menuButton.left, menuButton.top, menuButton.right,\
                             menuButton.bottom, fill=data.menuButton.color)
+    canvas.create_text((menuButton.left+menuButton.right)/2,\
+                (menuButton.top+menuButton.bottom)/2,text="MENU", fill="white")
     
 def startRedrawAll(canvas, data):
     canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut")
@@ -303,11 +311,11 @@ def startRedrawAll(canvas, data):
 ### Game Mode
 """also there should be powerups along the way"""
 def gameMousePressed(event, data):
-    if data.pauseButton.left>event.x>data.pauseButton.right and\
+    if data.pauseButton.left<event.x<data.pauseButton.right and\
      data.pauseButton.bottom>event.y>data.pauseButton.top:
         data.pauseButton.color = data.clickColor
         data.mode = "pause"
-        data.playButton.color = data.buttonColor
+        data.pauseButton.color = data.buttonColor
 
 def gameKeyPressed(event, data):
     if event.keysym == "Up":
@@ -351,6 +359,8 @@ def gameTimerFired(data):
         path = data.enemy.findPath()
         data.enemy.x += path[0][0]
         data.enemy.y -= path[0][1]
+    
+    
         
         
     
@@ -358,7 +368,15 @@ def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left, pauseButton.top, \
                             pauseButton.right, pauseButton.bottom,\
                             fill=data.pauseButton.color)
-
+    canvas.create_rectangle(pauseButton.left+5, pauseButton.top+2, \
+                            pauseButton.right-25, pauseButton.bottom-2,\
+                            fill="yellow")
+    canvas.create_rectangle(pauseButton.left+25, pauseButton.top+2, \
+                           pauseButton.right-5, pauseButton.bottom-2,\
+                           fill="yellow")
+def drawCannons(canvas, data):
+    return 
+    
 def gameRedrawAll(canvas, data):
     drawWalls(canvas, data)
     drawCannons(canvas, data)
@@ -412,12 +430,10 @@ def hitsWall(data):
             return True
     return False
 
-
-    
 def createWalls(data):
     #todo: define a level chooser, like a mode dispatcher?
     for block in data.lvl: 
-        data.walls.append(Wall(lvl[block[0]],data.lvl[block[1]]))
+        data.walls.append(Wall(data.lvl[block[0]],data.lvl[block[1]]))
         
 def drawWalls(canvas,data):
     for wallBlock in data.walls:
@@ -442,7 +458,9 @@ def drawPlayer(canvas, data):
 
 ### Run Function
 #from 112 website
+
 def run(width=300, height=300):
+    
     def redrawAllWrapper(canvas, data):
         canvas.delete(ALL)
         canvas.create_rectangle(0, 0, data.width, data.height,
