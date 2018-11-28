@@ -11,7 +11,7 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(3,42),(6,43)],[(2,38),(3,42)],[(4,39),(5,40)],
             [(3,37),(5,38)],[(4,34),(5,37)],[(1,33),(5,34)],[(0,26),(1,33)],
             [(1,27),(2,28)],[(1,25),(6,26)],[(2,30),(4,32)],[(4,30),(6,31)],
-            [(6,25),(7,48)],[(7,48),(14,39)],[(13,39),(14,40)],
+            [(6,25),(7,38)],[(7,38),(14,39)],[(13,39),(14,40)],
             [(14,41),(15,42)],[(15,38),(16,40)],[(16,40),(18,41)],
             [(18,40),(19,43)],[(20,39),(21,44)],[(18,38),(21,39)],
             [(17,36),(18,39)],[(13,35),(17,37)],[(11,35),(12,38)],
@@ -144,8 +144,8 @@ class Enemy(Player):
         super().__init__(x, y, size)
     
     
-    
     def findPath(self, moves=None):
+        #todo: produce new algorithm for enemy
         #todo: finish this method
         #this will return a list of moves needed to get to the player
         #backtracking template taken from 112 website
@@ -221,8 +221,8 @@ def init(data):
     # and scrollY
     #todo: figure out correct sX and sY to start player in middle of screen
     #todo:                                      and at the bottom of the map
-    data.sX = 100
-    data.sY = 400
+    data.sX = -200
+    data.sY = -1520
     #center coordinates for the player
     data.cX = data.width/2
     data.cY = data.height//2
@@ -335,14 +335,14 @@ def gameKeyPressed(event, data):
         movePlayer(0, 1, data)
         
     if event.keysym == "Left":
-        moveWalls(data, 1, 0)
-        moveCannons(data, 1, 0)
-        movePlayer(-1, 0, data)   
-             
-    if event.keysym == "Right":
         moveWalls(data, -1, 0)
         moveCannons(data, -1, 0)
-        movePlayer(1, 0, data)
+        movePlayer(1, 0, data)   
+             
+    if event.keysym == "Right":
+        moveWalls(data, 1, 0)
+        moveCannons(data, 1, 0)
+        movePlayer(-1, 0, data)
         
     if event.keysym == "p":
         data.mode = "pause"
@@ -357,24 +357,21 @@ def gameTimerFired(data):
             data.bullets.append(cannon.makeBullet())
     #from hw11
     for bullet in data.bullets:
-        bullet.moveBullet()
-        for wall in data.walls:
-            if bullet.collidesWithWall(wall):
+        # bullet.moveBullet()
+        # for wall in data.walls:
+            # if bullet.collidesWithWall(wall):
                 #no need to keep track of off-screen bullets
-                data.bullets.remove(bullet)
+        data.bullets.remove(bullet)
         if bullet.collidesWithPlayer(data.player):
             data.bullets.remove(bullet)
-        for wall in data.walls:
-            if bullet.collidesWithWall(wall):
-                data.bullets.remove(bullet)
+        
     
     # if data.timerCount % 4 == 0:
     #     path = data.enemy.findPath()
     #     data.enemy.x += path[0][0]
     #     data.enemy.y -= path[0][1]
     
-    
-  
+
 def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left, pauseButton.top, \
                             pauseButton.right, pauseButton.bottom,\
@@ -392,7 +389,7 @@ def createCannons(data):
         
 def drawCannons(canvas, data):
     for cannon in data.cannons:
-        canvas.create_rectangle(cannon.left*data.pixel, cannon.top*data.pixel, cannon.right*data.pixel, cannon.bottom*data.pixel, fill="green")
+        canvas.create_rectangle(data.sX+cannon.left*data.pixel, data.sY+cannon.top*data.pixel, data.sX+cannon.right*data.pixel, data.sY+cannon.bottom*data.pixel, fill="green")
 
 def createWalls(data):
     #todo: define a level chooser, like a mode dispatcher?
@@ -401,18 +398,11 @@ def createWalls(data):
 
 def drawWalls(canvas,data):
     for wallBlock in data.walls:
-        canvas.create_rectangle(data.pixel*(wallBlock.left),\
-                        data.pixel*(wallBlock.top),\
-                        data.pixel*(wallBlock.right), \
-                        data.pixel*(wallBlock.bottom), fill ="black")
-                        
-def eraseWalls(canvas, data):
-    for wallBlock in data.walls:
-        canvas.create_rectangle(data.pixel*(wallBlock.left),\
-                        data.pixel*(wallBlock.top),\
-                        data.pixel*(wallBlock.right), \
-                        data.pixel*(wallBlock.bottom), fill ="white")
-    
+        canvas.create_rectangle(data.sX+data.pixel*(wallBlock.left),\
+                        data.sY+data.pixel*(wallBlock.top),\
+                        data.sX+data.pixel*(wallBlock.right), \
+                        data.sY+data.pixel*(wallBlock.bottom), fill ="black")
+
 
 def drawPlayer(canvas, data):
     #placeholder for now
@@ -430,6 +420,10 @@ def gameRedrawAll(canvas, data):
     drawCannons(canvas, data)
     drawPlayer(canvas, data)
     drawPauseButton(data.pauseButton, canvas, data)
+    #print(data.player.x, data.player.y)
+    #print(data.walls[0].left, data.walls[0].top)
+    #print(hitsWall(data))
+    
     
 ### Pause Mode
 """menu, quit buttons, also when you press the pause button again(or press p)
@@ -450,6 +444,8 @@ def pauseTimerFired(data):
 def pauseRedrawAll(canvas, data):
     canvas.create_rectangle(0,0,data.width, data.height,fill="light grey")
     canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED")
+    canvas.create_text(data.width/2, data.height/2, text="Press 'p' to resume")
+    #todo: menu and quit buttons
 
 ### Menu Mode
 """different players to choose from, settings (and powerups) """
@@ -472,13 +468,10 @@ def hitsWall(data):
     for wallBlock in data.walls:
         #hit from the left,right,below,above respectively
         #right-->(block is on the right of the player)
-        if wallBlock.left < data.player.x + data.player.r < wallBlock.right\
-        or wallBlock.left < data.player.x - data.player.r < wallBlock.right\
-        or wallBlock.top < data.player.y - data.player.r < wallBlock.bottom\
-        or wallBlock.top < data.player.y + data.player.r < wallBlock.bottom:
+        if (data.pixel*wallBlock.left + data.sX < data.player.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < data.player.y < data.pixel*wallBlock.bottom + data.sY) or\
+         (data.pixel*wallBlock.left + data.sX < data.player.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < data.player.y < data.pixel*wallBlock.bottom + data.sY):
             return True
     return False
-
 
 
 def moveWalls(data, dx, dy):
@@ -492,7 +485,6 @@ def moveCannons(data, dx, dy):
         cannon.moveWall(dx,dy)
         data.cannons.remove(cannon)
     
-
 
 ### Run Function
 #from 112 website
