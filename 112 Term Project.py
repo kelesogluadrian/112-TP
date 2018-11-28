@@ -66,15 +66,17 @@ class Wall(object):
         self.right = bottomRight[0]
             
     def moveWall(self, dx, dy):
-        self.top += dx
-        self.bottom += dx
-        self.right -= dy
-        self.left -= dy
+        self.left += dx
+        self.right += dx
+        self.top -= dy
+        self.bottom -= dy
 
 class Cannon(Wall):
     def __init__(self, topLeft, bottomRight, direction):
         super().__init__(topLeft, bottomRight)
         self.direction = direction
+        self.cx = (self.left + self.right)/2
+        self.cy = (self.top + self.bottom)/2
         
     def makeBullet(self):
         # Generates a bullet heading in the direction the cannon is facing
@@ -91,9 +93,9 @@ class Bullet(object):
         # A bullet has a position, a size, a direction
         self.cx = cx
         self.cy = cy
-        self.r = 5
+        self.r = 3
         self.direction = direction
-        self.speed = speed
+        self.speed = 5
     
     # View
     def draw(self, canvas):
@@ -112,8 +114,11 @@ class Bullet(object):
         if(not isinstance(other, Wall)): # Other must be a Wall
             return False
         else:
-            dist = ((other.cx - self.cx)**2 + (other.cy - self.cy)**2)**0.5
-            return dist < self.r + other.r
+            return abs(other.left-self.cx) < self.r or\
+             abs(other.right-self.cx) < self.r or\
+              abs(other.top-self.cy) < self.r or \
+              abs(other.bottom-self.cy) < self.r
+            
 
     def collidesWithPlayer(self, other):
         # Check if the bullet and player overlap at all
@@ -206,20 +211,21 @@ class PauseButton(Button):
 def init(data):
     data.timerCount = 0
     data.lvl = level1
-    data.walls=[]
+    data.can = level1Cannons
+    data.walls = []
     data.bullets = []
-    data.cannons = level1Cannons
+    data.cannons = []
     data.mode = "start"
     data.pixel = 40 #the unit length in the game
     data.margin = 10 # margin for the pause button
     # and scrollY
     #todo: figure out correct sX and sY to start player in middle of screen
     #todo:                                      and at the bottom of the map
-    data.sX = 90
-    data.sY = 100
+    data.sX = 100
+    data.sY = 400
     #center coordinates for the player
-    data.cX = data.width//data.pixel//2
-    data.cY = data.height//data.pixel//2
+    data.cX = data.width/2
+    data.cY = data.height//2
     data.buttonColor = "blue"
     data.clickColor = "red"
     data.player = Player(data.cX, data.cY, data.pixel/2)
@@ -308,7 +314,7 @@ def startRedrawAll(canvas, data):
     drawMenuButton(data.menuButton, canvas, data)
 
 
-### Game Mode
+### Game Mode #############
 """also there should be powerups along the way"""
 def gameMousePressed(event, data):
     if data.pauseButton.left<event.x<data.pauseButton.right and\
@@ -320,18 +326,22 @@ def gameMousePressed(event, data):
 def gameKeyPressed(event, data):
     if event.keysym == "Up":
         moveWalls(data, 0, -1)
+        moveCannons(data, 0, -1)
         movePlayer(0, -1, data)
         
     if event.keysym == "Down":
         moveWalls(data, 0, 1)
+        moveCannons(data, 0, 1)
         movePlayer(0, 1, data)
         
     if event.keysym == "Left":
-        moveWalls(data, -1, 0)
+        moveWalls(data, 1, 0)
+        moveCannons(data, 1, 0)
         movePlayer(-1, 0, data)   
              
     if event.keysym == "Right":
-        moveWalls(data, 1, 0)
+        moveWalls(data, -1, 0)
+        moveCannons(data, -1, 0)
         movePlayer(1, 0, data)
         
     if event.keysym == "p":
@@ -348,22 +358,23 @@ def gameTimerFired(data):
     #from hw11
     for bullet in data.bullets:
         bullet.moveBullet()
-        if bullet.isOffscreen(data.width, data.height):
-            #no need to keep track of off-screen bullets
+        for wall in data.walls:
+            if bullet.collidesWithWall(wall):
+                #no need to keep track of off-screen bullets
+                data.bullets.remove(bullet)
+        if bullet.collidesWithPlayer(data.player):
             data.bullets.remove(bullet)
         for wall in data.walls:
             if bullet.collidesWithWall(wall):
                 data.bullets.remove(bullet)
     
-    if data.timerCount % 4 == 0:
-        path = data.enemy.findPath()
-        data.enemy.x += path[0][0]
-        data.enemy.y -= path[0][1]
+    # if data.timerCount % 4 == 0:
+    #     path = data.enemy.findPath()
+    #     data.enemy.x += path[0][0]
+    #     data.enemy.y -= path[0][1]
     
     
-        
-        
-    
+  
 def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left, pauseButton.top, \
                             pauseButton.right, pauseButton.bottom,\
@@ -374,11 +385,48 @@ def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left+25, pauseButton.top+2, \
                            pauseButton.right-5, pauseButton.bottom-2,\
                            fill="yellow")
+
+def createCannons(data):
+    for cannon in data.can:
+        data.cannons.append(Cannon(cannon[0],cannon[1],cannon[2]))
+        
 def drawCannons(canvas, data):
-    return 
+    for cannon in data.cannons:
+        canvas.create_rectangle(cannon.left*data.pixel, cannon.top*data.pixel, cannon.right*data.pixel, cannon.bottom*data.pixel, fill="green")
+
+def createWalls(data):
+    #todo: define a level chooser, like a mode dispatcher?
+    for block in data.lvl: 
+        data.walls.append(Wall(block[0], block[1]))
+
+def drawWalls(canvas,data):
+    for wallBlock in data.walls:
+        canvas.create_rectangle(data.pixel*(wallBlock.left),\
+                        data.pixel*(wallBlock.top),\
+                        data.pixel*(wallBlock.right), \
+                        data.pixel*(wallBlock.bottom), fill ="black")
+                        
+def eraseWalls(canvas, data):
+    for wallBlock in data.walls:
+        canvas.create_rectangle(data.pixel*(wallBlock.left),\
+                        data.pixel*(wallBlock.top),\
+                        data.pixel*(wallBlock.right), \
+                        data.pixel*(wallBlock.bottom), fill ="white")
+    
+
+def drawPlayer(canvas, data):
+    #placeholder for now
+    #TODO: define images, or shapes for the player and replace the rect
+    canvas.create_rectangle(data.player.x - data.pixel/2,\
+                            data.player.y - data.pixel/2,\
+                            data.player.x + data.pixel/2,\
+                            data.player.y + data.pixel/2, fill="red")
+
     
 def gameRedrawAll(canvas, data):
+    createWalls(data)
     drawWalls(canvas, data)
+    createCannons(data)
     drawCannons(canvas, data)
     drawPlayer(canvas, data)
     drawPauseButton(data.pauseButton, canvas, data)
@@ -419,41 +467,31 @@ def menuRedrawAll(canvas, data):
 
 ### Mode-blind functions
 
+    
 def hitsWall(data):
     for wallBlock in data.walls:
         #hit from the left,right,below,above respectively
         #right-->(block is on the right of the player)
-        if wallBlock.left < data.player.x + data.player.size < wallBlock.right\
-        or wallBlock.left < data.player.x - data.player.size < wallBlock.right\
-        or wallBlock.top < data.player.y - data.player.size < wallBlock.bottom\
-        or wallBlock.top < data.player.y + data.player.size < wallBlock.bottom:
+        if wallBlock.left < data.player.x + data.player.r < wallBlock.right\
+        or wallBlock.left < data.player.x - data.player.r < wallBlock.right\
+        or wallBlock.top < data.player.y - data.player.r < wallBlock.bottom\
+        or wallBlock.top < data.player.y + data.player.r < wallBlock.bottom:
             return True
     return False
 
-def createWalls(data):
-    #todo: define a level chooser, like a mode dispatcher?
-    for block in data.lvl: 
-        data.walls.append(Wall(data.lvl[block[0]],data.lvl[block[1]]))
-        
-def drawWalls(canvas,data):
-    for wallBlock in data.walls:
-        canvas.create_rectangle(data.pixel*(data.sX + wallBlock.left),\
-                        data.pixel*(data.sY + wallBlock.top),\
-                        data.pixel*(data.sX + wallBlock.right), \
-                        data.pixel*(data.sY + wallBlock.bottom), fill ="green")
+
 
 def moveWalls(data, dx, dy):
     for wallBlock in data.walls:
         #time.sleep(0.1) #the delayed motion
         wallBlock.moveWall(dx, dy)
+        data.walls.remove(wallBlock)
+
+def moveCannons(data, dx, dy):
+    for cannon in data.cannons:
+        cannon.moveWall(dx,dy)
+        data.cannons.remove(cannon)
     
-def drawPlayer(canvas, data):
-    #placeholder for now
-    #TODO: define images, or shapes for the player and replace the rect
-    canvas.create_rectangle(data.player.x - data.pixel/2,\
-                            data.player.y - data.pixel/2,\
-                            data.player.x + data.pixel/2,\
-                            data.player.y + data.pixel/2)
 
 
 ### Run Function
