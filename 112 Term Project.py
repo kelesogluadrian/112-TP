@@ -228,7 +228,7 @@ def init(data):
     data.cY = data.height//2
     data.buttonColor = "blue"
     data.clickColor = "red"
-    data.player = Player(data.cX, data.cY, data.pixel/2)
+    data.player = Player(data.cX, data.cY, data.pixel/3)
     data.enemy = Enemy(data.cX, data.cY, data.pixel/2)
     data.playButton = Button("PLAY", data.width/2, 3*data.height//5,\
                             data.buttonColor)
@@ -356,14 +356,15 @@ def gameTimerFired(data):
         for cannon in data.cannons:
             data.bullets.append(cannon.makeBullet())
     #from hw11
-    for bullet in data.bullets:
-        # bullet.moveBullet()
-        # for wall in data.walls:
-            # if bullet.collidesWithWall(wall):
-                #no need to keep track of off-screen bullets
-        data.bullets.remove(bullet)
-        if bullet.collidesWithPlayer(data.player):
-            data.bullets.remove(bullet)
+    if data.bullets != []:
+        for bullet in data.bullets:
+            bullet.moveBullet()
+            # for wall in data.walls:
+                # if bullet.collidesWithWall(wall):
+                    #no need to keep track of off-screen bullets
+                    #data.bullets.remove(bullet)
+            if bullet.collidesWithPlayer(data.player):
+                data.bullets.remove(bullet)
         
     
     # if data.timerCount % 4 == 0:
@@ -390,6 +391,12 @@ def createCannons(data):
 def drawCannons(canvas, data):
     for cannon in data.cannons:
         canvas.create_rectangle(data.sX+cannon.left*data.pixel, data.sY+cannon.top*data.pixel, data.sX+cannon.right*data.pixel, data.sY+cannon.bottom*data.pixel, fill="green")
+        offset=20
+        centerx = (data.sX+cannon.left*data.pixel+data.sX+cannon.right*data.pixel)/2
+        centery = (data.sY+cannon.top*data.pixel+data.sY+cannon.bottom*data.pixel)/2
+        canvas.create_line(centerx,centery,centerx+cannon.direction[0]*offset,\
+                centery+cannon.direction[1]*offset, width=5, fill="black")
+        
 
 def createWalls(data):
     #todo: define a level chooser, like a mode dispatcher?
@@ -407,11 +414,15 @@ def drawWalls(canvas,data):
 def drawPlayer(canvas, data):
     #placeholder for now
     #TODO: define images, or shapes for the player and replace the rect
-    canvas.create_rectangle(data.player.x - data.pixel/2,\
-                            data.player.y - data.pixel/2,\
-                            data.player.x + data.pixel/2,\
-                            data.player.y + data.pixel/2, fill="red")
-
+    canvas.create_rectangle(data.player.x - data.player.r,\
+                            data.player.y - data.player.r,\
+                            data.player.x + data.player.r,\
+                            data.player.y + data.player.r, fill="red")
+def drawBullets(canvas, data):
+    for bullet in data.bullets:
+        canvas.create_oval(bullet.cx - bullet.r, bullet.cy - bullet.r, 
+                           bullet.cx + bullet.r, bullet.cy + bullet.r,
+                           fill="white", outline=None)
     
 def gameRedrawAll(canvas, data):
     createWalls(data)
@@ -420,6 +431,7 @@ def gameRedrawAll(canvas, data):
     drawCannons(canvas, data)
     drawPlayer(canvas, data)
     drawPauseButton(data.pauseButton, canvas, data)
+    drawBullets(canvas, data)
     #print(data.player.x, data.player.y)
     #print(data.walls[0].left, data.walls[0].top)
     #print(hitsWall(data))
