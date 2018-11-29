@@ -352,21 +352,20 @@ def gameKeyPressed(event, data):
 def gameTimerFired(data):
     data.timerCount += 1
     
-    if data.timerCount % 20 == 0:
+    if data.timerCount % 25 == 0:
     #from hw11
         for cannon in data.cannons:
             data.bullets.append(createBullet(cannon, data))
     #from hw11
     if data.bullets != []:
         for bullet in data.bullets:
-            if data.timerCount % 3 == 0: 
+            if data.timerCount % 2 == 0: 
                 bullet.moveBullet()
-            # if data.timerCount % 5 == 0:
-            #     for wall in data.walls:
-            #         if bullet.collidesWithWall(wall):
-            #             # no need to keep track of off-screen bullets
-            #             if bullet in data.bullets:
-            #                 data.bullets.remove(bullet)
+            #if data.timerCount % 5 == 0:
+            if bulletHitsWall(bullet, data):
+                # no need to keep track of off-screen bullets
+                #if bullet in data.bullets:
+                data.bullets.remove(bullet)
             if bullet.collidesWithPlayer(data.player):
                 data.bullets.remove(bullet)
     
@@ -497,6 +496,13 @@ def hitsWall(data):
         #right-->(block is on the right of the player)
         if (data.pixel*wallBlock.left + data.sX < data.player.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < data.player.y < data.pixel*wallBlock.bottom + data.sY) or\
          (data.pixel*wallBlock.left + data.sX < data.player.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < data.player.y < data.pixel*wallBlock.bottom + data.sY):
+            return True
+    return False
+    
+def bulletHitsWall(bullet, data):
+    for wallBlock in data.walls:
+        if (data.pixel*wallBlock.left + data.sX <= data.sX + data.pixel*bullet.cx <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.sY + data.pixel*bullet.cy <= data.pixel*wallBlock.bottom + data.sY) or\
+         (data.pixel*wallBlock.left + data.sX <= data.sX + data.pixel*bullet.cx <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.sY+ data.pixel*bullet.cy <= data.pixel*wallBlock.bottom + data.sY):
             return True
     return False
 
