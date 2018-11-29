@@ -101,7 +101,7 @@ class Bullet(object):
         self.cy = cy
         self.r = 3
         self.direction = direction
-        self.speed = 5
+        self.speed = 0.5
     
     # View
     def draw(self, canvas):
@@ -113,11 +113,12 @@ class Bullet(object):
     def moveBullet(self):
         # Move according to the original trajectory
         self.cx += self.direction[0]*self.speed
-        self.cy -= self.direction[1]*self.speed
+        self.cy += self.direction[1]*self.speed
 
     def collidesWithWall(self, other):
         # Check if the bullet and wall overlap at all
-        if(not isinstance(other, Wall)): # Other must be a Wall
+        if not isinstance(other, Wall): 
+        # Other must be a Wall, not a Cannon
             return False
         else:
             return abs(other.left-self.cx) < self.r or\
@@ -351,21 +352,23 @@ def gameKeyPressed(event, data):
 def gameTimerFired(data):
     data.timerCount += 1
     
-    if data.timerCount % 10 == 0:
+    if data.timerCount % 20 == 0:
     #from hw11
         for cannon in data.cannons:
-            data.bullets.append(cannon.makeBullet())
+            data.bullets.append(createBullet(cannon, data))
     #from hw11
     if data.bullets != []:
         for bullet in data.bullets:
-            if data.timerCount % 4 == 0: bullet.moveBullet()
-            # for wall in data.walls:
-            #     if bullet.collidesWithWall(wall):
-            #         # no need to keep track of off-screen bullets
-            #         data.bullets.remove(bullet)
+            if data.timerCount % 3 == 0: 
+                bullet.moveBullet()
+            # if data.timerCount % 5 == 0:
+            #     for wall in data.walls:
+            #         if bullet.collidesWithWall(wall):
+            #             # no need to keep track of off-screen bullets
+            #             if bullet in data.bullets:
+            #                 data.bullets.remove(bullet)
             if bullet.collidesWithPlayer(data.player):
                 data.bullets.remove(bullet)
-        
     
     # if data.timerCount % 4 == 0:
     #     path = data.enemy.findPath()
@@ -374,7 +377,20 @@ def gameTimerFired(data):
     # createWalls(data)
     # createCannons(data)
     
-    
+def createBullet(cannon, data):
+        offset = 21/data.pixel #data.pixel/2 + 1 (plus something)
+        x = cannon.cx + offset*cannon.direction[0]
+        y = cannon.cy + offset*cannon.direction[1]
+        
+        return Bullet(x, y, cannon.direction) 
+
+def drawBullets(canvas, data):
+    for bullet in data.bullets:
+        canvas.create_oval(data.sX + data.pixel*bullet.cx - bullet.r,\
+                        data.sY + data.pixel*bullet.cy - bullet.r,\
+                        data.sX + data.pixel*bullet.cx + bullet.r,\
+                        data.sY + data.pixel*bullet.cy + bullet.r,
+                           fill="white", outline=None)
 
 def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left, pauseButton.top, \
@@ -394,11 +410,13 @@ def createCannons(data):
 def drawCannons(canvas, data):
     for cannon in data.cannons:
         canvas.create_rectangle(data.sX+cannon.left*data.pixel, data.sY+cannon.top*data.pixel, data.sX+cannon.right*data.pixel, data.sY+cannon.bottom*data.pixel, fill="green")
+    for cannon in data.cannons:
         offset=20
         centerx = (data.sX+cannon.left*data.pixel+data.sX+cannon.right*data.pixel)/2
         centery = (data.sY+cannon.top*data.pixel+data.sY+cannon.bottom*data.pixel)/2
         canvas.create_line(centerx,centery,centerx+cannon.direction[0]*offset,\
                 centery+cannon.direction[1]*offset, width=5, fill="black")
+        canvas.create_rectangle(centerx-2,centery-2,centerx+2,centery+2, fill="black")
         
 
 def createWalls(data):
@@ -422,13 +440,7 @@ def drawPlayer(canvas, data):
                             data.player.y - data.player.r,\
                             data.player.x + data.player.r,\
                             data.player.y + data.player.r, fill="red")
-def drawBullets(canvas, data):
-    for bullet in data.bullets:
-        canvas.create_oval(data.sX + data.pixel*bullet.cx - bullet.r,\
-                        data.sY + data.pixel*bullet.cy - bullet.r,\
-                        data.sX + data.pixel*bullet.cx + bullet.r,\
-                        data.sY + data.pixel*bullet.cy + bullet.r,
-                           fill="white", outline=None)
+
     
 def gameRedrawAll(canvas, data):
     drawWalls(canvas, data)
