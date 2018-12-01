@@ -143,7 +143,7 @@ class Player(object):
         self.x = x
         self.y = y
 
-def getPlayerLocation(player):
+def getPlayerLocation(data, player):
     return player.x, player.y
         
 class Enemy(Player):
@@ -151,27 +151,63 @@ class Enemy(Player):
         super().__init__(x, y, size)
     
     
-    def findPath(self, moves=None):
+    def findPath(self, data, self.x, self.y, moves=None):
         #todo: produce new algorithm for enemy
         #todo: finish this method
         #this will return a list of moves needed to get to the player
-        #backtracking template taken from 112 website
-        if moves == None:
-            moves = []
-            
-        if moves[-1] == getPlayerLocation(player):
-            return moves
-            
+        
         nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
-        for move in nextSteps:
-            self.moveEnemyLocation(self, nextSteps[0], nextSteps[1])
-            moves.append((self.x, self.y))
-            if not enemyHitsWall(self, data):
-                tmpSolution = findPath(self, moves)
-                if tmpSolution != None:
-                    return tmpSolution
-                moves.remove((self.x, self.y))
+        nextCells =\
+           [(self.x+(data.pixel*1)+data.sX,self.y+(data.pixel*0)+data.sY),\
+            (self.x+(data.pixel*-1)+data.sX,self.y+(data.pixel*0)+data.sY),\
+            (self.x+(data.pixel*0)+data.sX,self.y+(data.pixel*1)+data.sY),\
+            (self.x+(data.pixel*0)+data.sX,self.y+(data.pixel*-1)+data.sY)]
+        
+        if moves[-1] == getPlayerLocation(data, data.player):
+            return moves
+        
+        lengths={}
+        for cell in nextCells:
+            if isValid(cell):
+                dist = findDistToPlayer(cell, data)
+                if dist not in lengths.keys():
+                lengths[dist]=cell
+            nextMove = lengths[min(lengths.keys())]
+            moves.append(nextMove)
+            tmpSolution = findPath(self, data, nextMove, moves)
+            if tmpSolution != None:
+                return tmpSolution
         return None
+            
+            
+                
+                     
+        
+        
+def findDistToPlayer(cell, data):
+    x = abs(cell[0]-data.player.x)
+    y = abs(cell[1]-data.player.y)
+    return x+y
+        
+        
+        
+        #backtracking template taken from 112 website
+        # if moves == None:
+        #     moves = []
+        # if paths == None:
+        #     paths = []            
+        # if len(moves)>0 and moves[-1] == getPlayerLocation(player):
+        #     paths.append(moves)            
+        # nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
+        # for move in nextSteps:
+        #     self.moveEnemyLocation(self, nextSteps[0], nextSteps[1])
+        #     moves.append((self.x, self.y))
+        #     if not enemyHitsWall(self, data):
+        #         tmpSolution = findPath(self, moves)
+        #         if tmpSolution != None:
+        #             return tmpSolution
+        #         moves.remove((self.x, self.y))
+        # return None
 
     def moveEnemyLocation(self, dx, dy, data):
         #todo: this
@@ -181,11 +217,9 @@ class Enemy(Player):
 def enemyHitsWall(enemy, data):
     for wallBlock in data.walls:
         #hit from the left,right,below,above respectively
-        #right-->(block is on the right of the enemy)
-        if wallBlock.left < enemy.x + enemy.size < wallBlock.right\
-        or wallBlock.left < enemy.x - enemy.size < wallBlock.right\
-        or wallBlock.top < enemy.y - enemy.size < wallBlock.bottom\
-        or wallBlock.top < enemy.y + enemy.size < wallBlock.bottom:
+        #right-->(block is on the right of the player)
+        if (data.pixel*wallBlock.left + data.sX < enemy.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < enemy.y < data.pixel*wallBlock.bottom + data.sY) or\
+         (data.pixel*wallBlock.left + data.sX < enemy.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < enemy.y < data.pixel*wallBlock.bottom + data.sY):
             return True
     return False
 
@@ -214,7 +248,7 @@ class PauseButton(Button):
 
 
 ### Graphics
-
+#the animation framework is taken from 15-112 website
 def init(data):
     data.timerCount = 0
     data.lvl = level1
@@ -236,7 +270,7 @@ def init(data):
     data.buttonColor = "blue"
     data.clickColor = "red"
     data.player = Player(data.cX, data.cY, data.pixel/3)
-    data.enemy = Enemy(data.cX, data.cY, data.pixel/2)
+    data.enemy = None 
     data.playButton = Button("PLAY", data.width/2, 3*data.height//5,\
                             data.buttonColor)
     data.menuButton = Button("MENU", data.width//2, 4*data.height//5,\
@@ -368,7 +402,9 @@ def gameTimerFired(data):
                 data.bullets.remove(bullet)
             if bullet.collidesWithPlayer(data.player):
                 data.bullets.remove(bullet)
-    
+    if data.timerCount % 30 == 0 and data.enemy == None:
+        data.enemy = Enemy(data.cX, data.cY, data.pixel/2)
+        
     # if data.timerCount % 4 == 0:
     #     path = data.enemy.findPath()
     #     data.enemy.x += path[0][0]
