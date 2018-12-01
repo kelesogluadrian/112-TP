@@ -150,7 +150,7 @@ class Enemy(Player):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
     
-    
+    #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
     def findPath(self, data, self.x, self.y, moves=None):
         #todo: produce new algorithm for enemy
         #todo: finish this method
@@ -158,17 +158,17 @@ class Enemy(Player):
         
         nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
         nextCells =\
-           [(self.x+(data.pixel*1)+data.sX,self.y+(data.pixel*0)+data.sY),\
-            (self.x+(data.pixel*-1)+data.sX,self.y+(data.pixel*0)+data.sY),\
-            (self.x+(data.pixel*0)+data.sX,self.y+(data.pixel*1)+data.sY),\
-            (self.x+(data.pixel*0)+data.sX,self.y+(data.pixel*-1)+data.sY)]
+           [(data.pixel*(self.x+1)+data.sX,data.pixel*(self.y+0)+data.sY),\
+            (data.pixel*(self.x-1)+data.sX,data.pixel*(self.y+0)+data.sY),\
+            (data.pixel*(self.x+0)+data.sX,data.pixel*(self.y+1)+data.sY),\
+            (data.pixel*(self.x+0)+data.sX,data.pixel*(self.y-1)+data.sY)]
         
         if moves[-1] == getPlayerLocation(data, data.player):
             return moves
         
         lengths={}
         for cell in nextCells:
-            if isValid(cell):
+            if isValid(cell, data):
                 dist = findDistToPlayer(cell, data)
                 if dist not in lengths.keys():
                 lengths[dist]=cell
@@ -179,9 +179,14 @@ class Enemy(Player):
                 return tmpSolution
         return None
             
-            
+    def draw(self, canvas, data):
+        
                 
-                     
+def isValid(cell, data):
+    for wall in data.walls:
+        if (data.pixel*wallBlock.left + data.sX < cell[0] < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < cell[1] < data.pixel*wallBlock.bottom + data.sY):
+            return False
+    return True
         
         
 def findDistToPlayer(cell, data):
@@ -542,7 +547,6 @@ def bulletHitsWall(bullet, data):
             return True
     return False
 
-#todo: fix this
 def moveWalls(data, dx, dy):
     for wallBlock in data.walls:
         #time.sleep(0.1) #the delayed motion
