@@ -144,46 +144,66 @@ class Player(object):
         self.y = y
 
 def getPlayerLocation(data, player):
-    return player.x, player.y
+    x = (player.x-data.sX)/data.pixel
+    y = (player.y-data.sY)/data.pixel
+    return (x,y)
         
 class Enemy(Player):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
-    
+    #A* search algorithm with Manhattan heuristics
     #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
-    def findPath(self, data, self.x, self.y, moves=None):
-        #todo: produce new algorithm for enemy
+    def findPath(self, data, x=None, y=None, moves=None, visited=None, lengths=None):
+        
+        if moves == None:
+            moves = []
+            
+        if visited == None:
+            visited = []
+            
+        if x == None:
+            x = self.x
+        
+        if y == None:
+            y = self.y
+        
         #todo: finish this method
         #this will return a list of moves needed to get to the player
+        #backtracking template taken from 112 website
         
         nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
         nextCells =\
-           [(data.pixel*(self.x+1)+data.sX,data.pixel*(self.y+0)+data.sY),\
-            (data.pixel*(self.x-1)+data.sX,data.pixel*(self.y+0)+data.sY),\
-            (data.pixel*(self.x+0)+data.sX,data.pixel*(self.y+1)+data.sY),\
-            (data.pixel*(self.x+0)+data.sX,data.pixel*(self.y-1)+data.sY)]
-        
-        if moves[-1] == getPlayerLocation(data, data.player):
+           [((self.x+1),(self.y+0)),\
+            ((self.x-1),(self.y+0)),\
+            ((self.x+0),(self.y+1)),\
+            ((self.x+0),(self.y-1))]      
+              
+        if getPlayerLocation(data, data.player)==(self.x,self.y) or (len(moves)>0 and moves[-1] == getPlayerLocation(data, data.player)):
             return moves
-        
-        lengths={}
+            
+        if lengths==None:
+            lengths={}
+            
         for cell in nextCells:
-            if isValid(cell, data):
+            if isValid(cell, data) and cell not in visited:
                 dist = findDistToPlayer(cell, data)
                 if dist not in lengths.keys():
-                lengths[dist]=cell
-            nextMove = lengths[min(lengths.keys())]
-            moves.append(nextMove)
-            tmpSolution = findPath(self, data, nextMove, moves)
-            if tmpSolution != None:
-                return tmpSolution
+                    lengths[dist]=cell
+                nextMove = lengths[min(lengths.keys())]
+                moves.append(nextMove)
+                visited.append(nextMove)
+                tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited, lengths)
+                if tmpSolution != None:
+                    return tmpSolution
+                moves.remove(nextMove)
         return None
             
     def draw(self, canvas, data):
-        
+        canvas.create_rectangle(data.pixel*self.x-self.r+data.sX, data.pixel*self.y-self.r+data.sY, data.pixel*self.x+self.r+data.sX, data.pixel*self.y+self.r+data.sY, fill="blue")
+                
                 
 def isValid(cell, data):
-    for wall in data.walls:
+    for wallBlock in data.walls:
         if (data.pixel*wallBlock.left + data.sX < cell[0] < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < cell[1] < data.pixel*wallBlock.bottom + data.sY):
             return False
     return True
@@ -194,41 +214,7 @@ def findDistToPlayer(cell, data):
     y = abs(cell[1]-data.player.y)
     return x+y
         
-        
-        
-        #backtracking template taken from 112 website
-        # if moves == None:
-        #     moves = []
-        # if paths == None:
-        #     paths = []            
-        # if len(moves)>0 and moves[-1] == getPlayerLocation(player):
-        #     paths.append(moves)            
-        # nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
-        # for move in nextSteps:
-        #     self.moveEnemyLocation(self, nextSteps[0], nextSteps[1])
-        #     moves.append((self.x, self.y))
-        #     if not enemyHitsWall(self, data):
-        #         tmpSolution = findPath(self, moves)
-        #         if tmpSolution != None:
-        #             return tmpSolution
-        #         moves.remove((self.x, self.y))
-        # return None
 
-    def moveEnemyLocation(self, dx, dy, data):
-        #todo: this
-        self.x += dx*data.pixel
-        self.y -= dy*data.pixel
-
-def enemyHitsWall(enemy, data):
-    for wallBlock in data.walls:
-        #hit from the left,right,below,above respectively
-        #right-->(block is on the right of the player)
-        if (data.pixel*wallBlock.left + data.sX < enemy.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < enemy.y < data.pixel*wallBlock.bottom + data.sY) or\
-         (data.pixel*wallBlock.left + data.sX < enemy.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < enemy.y < data.pixel*wallBlock.bottom + data.sY):
-            return True
-    return False
-
-#todo: use tkinter.Button instead of these
 class Button(object):
     def __init__(self, name, cx, cy, color):
         self.cx = cx
@@ -240,7 +226,7 @@ class Button(object):
         self.bottom = self.cy+10
         self.right = self.cx+30
 
-#play = tk.button()
+
         
 class PauseButton(Button):
     def __init__(self, cx, cy, color):
@@ -265,8 +251,6 @@ def init(data):
     data.pixel = 40 #the unit length in the game
     data.margin = 10 # margin for the pause button
     # and scrollY
-    #todo: figure out correct sX and sY to start player in middle of screen
-    #todo:                                      and at the bottom of the map
     data.sX = -200
     data.sY = -1520
     #center coordinates for the player
@@ -282,6 +266,9 @@ def init(data):
                             data.buttonColor)
     data.pauseButton = PauseButton(data.width-data.margin-(data.pixel/2),\
                                 data.margin+data.pixel/2, data.buttonColor)
+    data.resumeButton = Button("RESUME",data.width/2, 3*data.height/5, data.buttonColor)
+    
+    data.quitButton = Button("QUIT", data.width/2, 4*data.height/5, data.buttonColor)
     createWalls(data)
     createCannons(data)
 
@@ -302,24 +289,28 @@ def mousePressed(event,data):
     elif data.mode == "start":  startMousePressed(event, data)
     elif data.mode == "pause":  pauseMousePressed(event, data)
     elif data.mode == "game":   gameMousePressed(event, data)
+    elif data.mode == "gameOver":gameOverMousePressed(event, data)
     
 def keyPressed(event, data):
     if data.mode == "start":    startKeyPressed(event,data)
     elif data.mode == "game":   gameKeyPressed(event,data)
     elif data.mode == "pause":  pauseKeyPressed(event,data)
     elif data.mode == "menu":   menuKeyPressed(event,data)
-    
+    elif data.mode == "gameOver":gameOverKeyPressed(event,data)
+
 def timerFired(data):
     if data.mode == "game":     gameTimerFired(data)
     elif data.mode == "menu":   menuTimerFired(data)
     elif data.mode == "pause":  pauseTimerFired(data)
     elif data.mode == "start":  startTimerFired(data)
-    
+    elif data.mode == "gameOver":gameOverTimerFired(data)
+
 def redrawAll(canvas, data):
     if data.mode == "game":     gameRedrawAll(canvas, data)
     elif data.mode == "start":  startRedrawAll(canvas, data)
     elif data.mode == "menu":   menuRedrawAll(canvas, data)
     elif data.mode == "pause":  pauseRedrawAll(canvas, data)
+    elif data.mode == "gameOver":gameOverRedrawAll(canvas, data)
     
     
     
@@ -347,17 +338,17 @@ def drawPlayButton(playButton, canvas, data):
                     playButton.right,playButton.bottom,\
                     fill=data.playButton.color)
     canvas.create_text((playButton.left+playButton.right)/2,\
-                (playButton.top+playButton.bottom)/2,text="PLAY", fill="white")
+                (playButton.top+playButton.bottom)/2,text=playButton.name, fill="white")
 
 def drawMenuButton(menuButton, canvas, data):
     size = 30
     canvas.create_rectangle(menuButton.left, menuButton.top, menuButton.right,\
                             menuButton.bottom, fill=data.menuButton.color)
     canvas.create_text((menuButton.left+menuButton.right)/2,\
-                (menuButton.top+menuButton.bottom)/2,text="MENU", fill="white")
+                (menuButton.top+menuButton.bottom)/2,text=menuButton.name, fill="white")
     
 def startRedrawAll(canvas, data):
-    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut")
+    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", font="Arial 72 bold")
     drawPlayButton(data.playButton, canvas, data)
     drawMenuButton(data.menuButton, canvas, data)
 
@@ -407,15 +398,27 @@ def gameTimerFired(data):
                 data.bullets.remove(bullet)
             if bullet.collidesWithPlayer(data.player):
                 data.bullets.remove(bullet)
+                data.mode = "gameOver"
+                
     if data.timerCount % 30 == 0 and data.enemy == None:
-        data.enemy = Enemy(data.cX, data.cY, data.pixel/2)
+        data.enemy = Enemy(12.5, 45.5, data.pixel/2.5)
         
-    # if data.timerCount % 4 == 0:
-    #     path = data.enemy.findPath()
-    #     data.enemy.x += path[0][0]
-    #     data.enemy.y -= path[0][1]    
-    # createWalls(data)
-    # createCannons(data)
+        """"[(9,46),(16,47)]--> the wall above which the player starts
+        9+16/2 = 12.5 = cx
+        45.5 = cy
+        """
+    if data.timerCount % 4 == 0:
+        if data.enemy != None:
+            path = data.enemy.findPath(data)
+            if path != None:
+                data.enemy.x += path[0][0]
+                data.enemy.y -= path[0][1]   
+     
+    #print(getPlayerLocation(data, data.player) )
+     
+    # if data.timerCount % 5 == 0 and data.enemy!=None: 
+    #     print(data.enemy.x, data.enemy.y, data.walls[0].left, data.walls[0].top)
+
     
 def createBullet(cannon, data):
         offset = 21/data.pixel #data.pixel/2 + 1 (plus something)
@@ -488,6 +491,8 @@ def gameRedrawAll(canvas, data):
     drawPlayer(canvas, data)
     drawPauseButton(data.pauseButton, canvas, data)
     drawBullets(canvas, data)
+    if data.enemy != None:
+        data.enemy.draw(canvas, data)
 
     
     
@@ -499,6 +504,13 @@ you go back to playing
 """
 
 def pauseMousePressed(event, data):
+    if data.resumeButton.left<event.x<data.resumeButton.right and\
+     data.resumeButton.bottom>event.y>data.resumeButton.top:
+         data.mode = "game"
+         
+    if data.quitButton.left<event.x<data.quitButton.right and\
+     data.quitButton.bottom>event.y>data.quitButton.top:
+         init(data)
     pass
 
 def pauseKeyPressed(event, data):
@@ -507,11 +519,30 @@ def pauseKeyPressed(event, data):
     
 def pauseTimerFired(data):
     pass
+
+def drawResumeButton(button, canvas, data):
+    size = 30
+    canvas.create_rectangle(button.left, button.top,\
+                    button.right,button.bottom,\
+                    fill=button.color)
+    canvas.create_text((button.left+button.right)/2,\
+                (button.top+button.bottom)/2,text=button.name, fill="white")
+
+def drawQuitButton(button, canvas, data):
+    size = 30
+    canvas.create_rectangle(button.left, button.top,\
+                    button.right,button.bottom,\
+                    fill=button.color)
+    canvas.create_text((button.left+button.right)/2,\
+                (button.top+button.bottom)/2,text=button.name, fill="white")
     
 def pauseRedrawAll(canvas, data):
     canvas.create_rectangle(0,0,data.width, data.height,fill="light grey")
     canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED")
     canvas.create_text(data.width/2, data.height/2, text="Press 'p' to resume")
+    drawResumeButton(data.resumeButton, canvas, data)
+    drawQuitButton(data.quitButton, canvas, data)
+    
     #todo: menu and quit buttons
 
 ### Menu Mode
@@ -589,7 +620,7 @@ def run(width=300, height=300):
     data = Struct()
     data.width = width
     data.height = height
-    data.timerDelay = 10 # milliseconds
+    data.timerDelay = 20 # milliseconds
     root = Tk()
     init(data)
     # create the root and the canvas
