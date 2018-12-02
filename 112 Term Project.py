@@ -153,13 +153,13 @@ class Enemy(Player):
         super().__init__(x, y, size)
     #A* search algorithm with Manhattan heuristics
     #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
-    def findPath(self, data, x=None, y=None, moves=None, visited=None):
+    def findPath(self, data, x=None, y=None, moves=None):
         
         if moves == None:
             moves = []
             
-        if visited == None:
-            visited = []
+        # if visited == None:
+        #     visited = []
             
         if x == None:
             x = self.x
@@ -173,29 +173,33 @@ class Enemy(Player):
         
         nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
         nextCells =\
-           [((self.x+1),(self.y+0)),\
-            ((self.x-1),(self.y+0)),\
-            ((self.x+0),(self.y+1)),\
-            ((self.x+0),(self.y-1))]      
+           [(x+1,y+0),\
+            (x-1,y+0),\
+            (x+0,y+1),\
+            (x+0,y-1)]      
               
-        if getPlayerLocation(data, data.player)==(self.x,self.y) or (len(moves)>0 and moves[-1] == getPlayerLocation(data, data.player)):
+        if getPlayerLocation(data, data.player)==(x,y) or (len(moves)>0 and moves[-1] == getPlayerLocation(data, data.player)):
             return moves
             
         # if lengths==None:
         lengths={}
             
         for cell in nextCells:
-            if isValid(cell, data) and cell not in visited:
+            if isValid(cell, data):
                 dist = findDistToPlayer(cell, data)
                 if dist not in lengths.keys():
                     lengths[dist]=cell
-                nextMove = lengths[min(lengths.keys())]
-                moves.append(nextMove)
-                visited.append(nextMove)
-                tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited)
-                if tmpSolution != None:
-                    return tmpSolution
-                moves.remove(nextMove)
+        print(lengths)
+        print(getPlayerLocation(data, data.player))
+        print(moves)
+        nextMove = lengths[min(lengths.keys())]
+        moves.append(nextMove)
+            
+            # visited.append(nextMove)
+        tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves)
+        if tmpSolution != None:
+            return tmpSolution
+        moves.remove(nextMove)
                 
         return None
             
@@ -211,8 +215,8 @@ def isValid(cell, data):
         
         
 def findDistToPlayer(cell, data):
-    x = abs(cell[0]-data.player.x)
-    y = abs(cell[1]-data.player.y)
+    x = abs(cell[0]-((data.player.x-data.sX)/data.pixel))
+    y = abs(cell[1]-((data.player.y-data.sY)/data.pixel))
     return x+y
         
 
@@ -411,7 +415,7 @@ def gameTimerFired(data):
     if data.timerCount % 4 == 0:
         if data.enemy != None:
             path = data.enemy.findPath(data)
-            #print(path)
+            # print(path)
             if path != None:
                 data.enemy.x += path[0][0]
                 data.enemy.y -= path[0][1]   
@@ -557,6 +561,36 @@ def menuTimerFired(data):
 
 def menuRedrawAll(canvas, data):
     pass
+
+### Game Over Mode
+def gameOverMousePressed(event, data):
+    if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
+     data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
+         init(data)
+
+def gameOverKeyPressed(event,data):
+    return
+
+def gameOverTimerFired(data):
+    return
+    
+responses = ["Better luck next time!", "Every step you take.",\
+            "Not so smart, huh?", "There's no shame in losing."]
+            
+def gameOverRedrawAll(canvas, data):
+    drawWalls(canvas, data)
+    drawCannons(canvas, data)
+    drawPlayer(canvas, data)
+    drawPauseButton(data.pauseButton, canvas, data)
+    drawBullets(canvas, data)
+    if data.enemy != None:
+        data.enemy.draw(canvas, data)
+    width = data.width/3
+    height = data.height/3
+    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width+width, data.height+height, fill="blue")
+    
+    canvas.create_text(data.width/2, data.height/2-data.height/8, text=random.choice(responses), fill="white")
+    
 
 ### Mode-blind functions
 
