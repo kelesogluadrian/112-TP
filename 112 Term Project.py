@@ -10,12 +10,12 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(11,41),(14,42)],[(6,40),(10,41)],[(6,41),(7,42)],
             [(3,42),(6,43)],[(2,38),(3,42)],[(4,39),(5,40)],
             [(3,37),(5,38)],[(4,34),(5,37)],[(1,33),(5,34)],[(0,26),(1,33)],
-            [(1,27),(2,28)],[(1,25),(6,26)],[(2,30),(4,32)],[(4,30),(6,31)],
-            [(6,25),(7,38)],[(7,38),(14,39)],[(13,39),(14,40)],
+            [(1,27),(2,28)],[(1,25),(8,26)],[(2,30),(4,32)],[(4,30),(6,31)],
+            [(6,27),(7,38)],[(7,38),(14,39)],[(13,39),(14,40)],
             [(14,41),(15,42)],[(15,38),(16,40)],[(16,40),(18,41)],
             [(18,40),(19,43)],[(20,39),(21,44)],[(18,38),(21,39)],
             [(17,36),(18,39)],[(13,35),(17,37)],[(11,35),(12,38)],
-            [(8,35),(11,36)],[(8,28),(9,35)],[(7,22),(8,28)],[(8,27),(11,28)],
+            [(8,35),(11,36)],[(8,28),(9,35)],[(7,22),(8,26)],[(7,27),(11,28)],
             [(8,28),(10,29)],[(12,27),(13,34)],[(11,29),(14,30)],
             [(15,34),(19,35)],[(19,30),(20,35)],[(19,30),(23,31)],
             [(22,27),(23,31)],[(22,27),(25,28)],[(25,26),(27,27)],
@@ -27,7 +27,7 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(18,23),(19,25)],[(12,22),(15,23)],[(13,21),(15,24)],
             [(16,23),(17,25)],[(15,23),(16,24)],[(16,20),(17,22)],
             [(17,21),(21,22)],[(14,12),(16,20)],[(11,19),(21,20)],
-            [(12,21),(11,20)],[(9,19),(10,22)],[(16,17),(17,20)],
+            [(11,20),(12,21)],[(9,19),(10,22)],[(16,17),(17,20)],
             [(6,19),(9,20)],[(6,13),(7,19)],[(7,13),(9,14)],
             [(10,14),(11,17)],[(12,12),(14,13)],[(20,8),(21,19)],
             [(19,12),(20,14)],[(18,15),(19,18)],[(17,11),(18,16)],
@@ -153,7 +153,7 @@ class Enemy(Player):
         super().__init__(x, y, size)
     #A* search algorithm with Manhattan heuristics
     #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
-    def findPath(self, data, x=None, y=None, moves=None, visited=None, lengths=None):
+    def findPath(self, data, x=None, y=None, moves=None, visited=None):
         
         if moves == None:
             moves = []
@@ -181,8 +181,8 @@ class Enemy(Player):
         if getPlayerLocation(data, data.player)==(self.x,self.y) or (len(moves)>0 and moves[-1] == getPlayerLocation(data, data.player)):
             return moves
             
-        if lengths==None:
-            lengths={}
+        # if lengths==None:
+        lengths={}
             
         for cell in nextCells:
             if isValid(cell, data) and cell not in visited:
@@ -192,10 +192,11 @@ class Enemy(Player):
                 nextMove = lengths[min(lengths.keys())]
                 moves.append(nextMove)
                 visited.append(nextMove)
-                tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited, lengths)
+                tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited)
                 if tmpSolution != None:
                     return tmpSolution
                 moves.remove(nextMove)
+                
         return None
             
     def draw(self, canvas, data):
@@ -410,14 +411,12 @@ def gameTimerFired(data):
     if data.timerCount % 4 == 0:
         if data.enemy != None:
             path = data.enemy.findPath(data)
+            #print(path)
             if path != None:
                 data.enemy.x += path[0][0]
                 data.enemy.y -= path[0][1]   
      
-    #print(getPlayerLocation(data, data.player) )
-     
-    # if data.timerCount % 5 == 0 and data.enemy!=None: 
-    #     print(data.enemy.x, data.enemy.y, data.walls[0].left, data.walls[0].top)
+                
 
     
 def createBullet(cannon, data):
