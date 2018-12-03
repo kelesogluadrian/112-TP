@@ -1,5 +1,7 @@
 from tkinter import *
 import time
+import random
+import math
 
 ### Levels
 
@@ -51,6 +53,7 @@ level1Cannons = [ [(14,41),(15,42),(0,-1)],[(2,25),(3,26),(0,1)],
                 [(14,6),(15,7),(0,1)],[(3,3),(4,4),(0,1)],
                 [(13,9),(14,10),(0,1)]]
                 
+stars = [(1.5,26.5),(3.5,6.5),(10.5,31.5),(25.5,23.5),(8.5,16.5),(12.5,16.5)]
 #todo: put coordinates for powerups
 
 
@@ -189,9 +192,9 @@ class Enemy(Player):
                 dist = findDistToPlayer(cell, data)
                 if dist not in lengths.keys():
                     lengths[dist]=cell
-        print(lengths)
-        print(getPlayerLocation(data, data.player))
-        print(moves)
+        # print(lengths)
+        # print(getPlayerLocation(data, data.player))
+        # print(moves)
         nextMove = lengths[min(lengths.keys())]
         moves.append(nextMove)
             
@@ -200,9 +203,8 @@ class Enemy(Player):
         if tmpSolution != None:
             return tmpSolution
         moves.remove(nextMove)
-                
         return None
-            
+
     def draw(self, canvas, data):
         canvas.create_rectangle(data.pixel*self.x-self.r+data.sX, data.pixel*self.y-self.r+data.sY, data.pixel*self.x+self.r+data.sX, data.pixel*self.y+self.r+data.sY, fill="blue")
                 
@@ -212,8 +214,7 @@ def isValid(cell, data):
         if (data.pixel*wallBlock.left + data.sX < cell[0] < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < cell[1] < data.pixel*wallBlock.bottom + data.sY):
             return False
     return True
-        
-        
+
 def findDistToPlayer(cell, data):
     x = abs(cell[0]-((data.player.x-data.sX)/data.pixel))
     y = abs(cell[1]-((data.player.y-data.sY)/data.pixel))
@@ -230,9 +231,14 @@ class Button(object):
         self.left = self.cx-30
         self.bottom = self.cy+10
         self.right = self.cx+30
+    
+    def draw(self, canvas, data):
+        canvas.create_rectangle(self.left, self.top,\
+                        self.right,self.bottom,\
+                        fill=self.color)
+        canvas.create_text((self.left+self.right)/2,\
+                    (self.top+self.bottom)/2,text=self.name, fill="white")
 
-
-        
 class PauseButton(Button):
     def __init__(self, cx, cy, color):
         self.size = 20
@@ -249,10 +255,12 @@ def init(data):
     data.timerCount = 0
     data.lvl = level1
     data.can = level1Cannons
+    data.stars = stars
     data.walls = []
     data.bullets = []
     data.cannons = []
     data.mode = "start"
+    data.collected = 0
     data.pixel = 40 #the unit length in the game
     data.margin = 10 # margin for the pause button
     # and scrollY
@@ -271,9 +279,12 @@ def init(data):
                             data.buttonColor)
     data.pauseButton = PauseButton(data.width-data.margin-(data.pixel/2),\
                                 data.margin+data.pixel/2, data.buttonColor)
-    data.resumeButton = Button("RESUME",data.width/2, 3*data.height/5, data.buttonColor)
-    
-    data.quitButton = Button("QUIT", data.width/2, 4*data.height/5, data.buttonColor)
+    data.resumeButton = Button("RESUME",data.width/2, 3*data.height/5,\
+                                data.buttonColor)
+    data.quitButton = Button("QUIT", data.width/2, 4*data.height/5,\
+                                data.buttonColor)
+    data.mainMenuButton = Button("PLAY AGAIN", data.width/2, 4*data.height/6,\
+                            data.buttonColor)
     createWalls(data)
     createCannons(data)
 
@@ -337,25 +348,11 @@ def startKeyPressed(event, data):
 def startTimerFired(data):
     pass
     
-def drawPlayButton(playButton, canvas, data):
-    size = 30
-    canvas.create_rectangle(playButton.left, playButton.top,\
-                    playButton.right,playButton.bottom,\
-                    fill=data.playButton.color)
-    canvas.create_text((playButton.left+playButton.right)/2,\
-                (playButton.top+playButton.bottom)/2,text=playButton.name, fill="white")
-
-def drawMenuButton(menuButton, canvas, data):
-    size = 30
-    canvas.create_rectangle(menuButton.left, menuButton.top, menuButton.right,\
-                            menuButton.bottom, fill=data.menuButton.color)
-    canvas.create_text((menuButton.left+menuButton.right)/2,\
-                (menuButton.top+menuButton.bottom)/2,text=menuButton.name, fill="white")
     
 def startRedrawAll(canvas, data):
     canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", font="Arial 72 bold")
-    drawPlayButton(data.playButton, canvas, data)
-    drawMenuButton(data.menuButton, canvas, data)
+    data.playButton.draw(canvas, data)
+    data.menuButton.draw(canvas, data)
 
 
 ### Game Mode #############
@@ -412,14 +409,20 @@ def gameTimerFired(data):
         9+16/2 = 12.5 = cx
         45.5 = cy
         """
-    if data.timerCount % 4 == 0:
-        if data.enemy != None:
-            path = data.enemy.findPath(data)
-            # print(path)
-            if path != None:
-                data.enemy.x += path[0][0]
-                data.enemy.y -= path[0][1]   
-     
+    # if data.timerCount % 4 == 0:
+    #     if data.enemy != None:
+    #         path = data.enemy.findPath(data)
+    #         # print(path)
+    #         if path != None:
+    #             data.enemy.x += path[0][0]
+    #             data.enemy.y -= path[0][1]  
+                 
+    pX = (data.player.x-data.sX)/data.pixel
+    pY = (data.player.y-data.sY)/data.pixel  
+    for star in data.stars:
+        if star[0]==pX and star[1]==pY:
+            data.stars.remove(star)
+            data.collected += 1
                 
 
     
@@ -452,7 +455,7 @@ def drawPauseButton(pauseButton, canvas, data):
 def createCannons(data):
     for cannon in data.can:
         data.cannons.append(Cannon(cannon[0],cannon[1],cannon[2]))
-        
+
 def drawCannons(canvas, data):
     for cannon in data.cannons:
         canvas.create_rectangle(data.sX+cannon.left*data.pixel, data.sY+cannon.top*data.pixel, data.sX+cannon.right*data.pixel, data.sY+cannon.bottom*data.pixel, fill="green")
@@ -487,25 +490,31 @@ def drawPlayer(canvas, data):
                             data.player.x + data.player.r,\
                             data.player.y + data.player.r, fill="red")
 
+def drawCollected(canvas, data):
+    x1=data.margin
+    y1=data.height-40
+    x2=140
+    y2=data.height-data.margin
+    canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black")
+    canvas.create_text((x1+x2)/2, (y1+y2)/2, text="Stars: "+str(data.collected))
+    
+
     
 def gameRedrawAll(canvas, data):
     drawWalls(canvas, data)
     drawCannons(canvas, data)
+    drawStars(canvas, data)
     drawPlayer(canvas, data)
     drawPauseButton(data.pauseButton, canvas, data)
     drawBullets(canvas, data)
     if data.enemy != None:
         data.enemy.draw(canvas, data)
+    drawCollected(canvas, data)
 
     
     
     
 ### Pause Mode
-"""menu, quit buttons, also when you press the pause button again(or press p)
-you go back to playing
-
-"""
-
 def pauseMousePressed(event, data):
     if data.resumeButton.left<event.x<data.resumeButton.right and\
      data.resumeButton.bottom>event.y>data.resumeButton.top:
@@ -522,31 +531,14 @@ def pauseKeyPressed(event, data):
     
 def pauseTimerFired(data):
     pass
-
-def drawResumeButton(button, canvas, data):
-    size = 30
-    canvas.create_rectangle(button.left, button.top,\
-                    button.right,button.bottom,\
-                    fill=button.color)
-    canvas.create_text((button.left+button.right)/2,\
-                (button.top+button.bottom)/2,text=button.name, fill="white")
-
-def drawQuitButton(button, canvas, data):
-    size = 30
-    canvas.create_rectangle(button.left, button.top,\
-                    button.right,button.bottom,\
-                    fill=button.color)
-    canvas.create_text((button.left+button.right)/2,\
-                (button.top+button.bottom)/2,text=button.name, fill="white")
     
 def pauseRedrawAll(canvas, data):
     canvas.create_rectangle(0,0,data.width, data.height,fill="light grey")
     canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED")
     canvas.create_text(data.width/2, data.height/2, text="Press 'p' to resume")
-    drawResumeButton(data.resumeButton, canvas, data)
-    drawQuitButton(data.quitButton, canvas, data)
+    data.resumeButton.draw(canvas, data)
+    data.quitButton.draw(canvas, data)
     
-    #todo: menu and quit buttons
 
 ### Menu Mode
 """different players to choose from, settings (and powerups) """
@@ -590,6 +582,8 @@ def gameOverRedrawAll(canvas, data):
     canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width+width, data.height+height, fill="blue")
     
     canvas.create_text(data.width/2, data.height/2-data.height/8, text=random.choice(responses), fill="white")
+    data.mainMenuButton.draw(canvas, data)
+    
     
 
 ### Mode-blind functions
@@ -611,16 +605,33 @@ def bulletHitsWall(bullet, data):
             return True
     return False
 
-def moveWalls(data, dx, dy):
-    for wallBlock in data.walls:
-        #time.sleep(0.1) #the delayed motion
-        wallBlock.moveWall(dx, dy)
-        data.walls.remove(wallBlock)
+def drawStars(canvas, data):
+    for star in data.stars:
+        drawStar(star[0],star[1], canvas, data)
 
-def moveCannons(data, dx, dy):
-    for cannon in data.cannons:
-        cannon.moveWall(dx,dy)
-        data.cannons.remove(cannon)
+def drawStar(cX, cY, canvas, data, diameter=15, numPoints=5, color="gold"):
+    radius = diameter/2
+    centerX = data.pixel*cX + data.sX
+    centerY = data.pixel*cY + data.sY
+    #the inner circle
+    canvas.create_oval(centerX-radius, centerY-radius, centerX+radius,\
+                        centerY+radius, fill = color,width=0) 
+    outerRadius = 2*(2**(1/2))*radius/(3**(1/2))+ radius 
+    #the radius of the outer points
+    dAngle = 2*math.pi/numPoints
+    for i in range(numPoints):
+        outerPointX = centerX+outerRadius*math.cos((math.pi/2)+i*dAngle) 
+        outerPointY = centerY-outerRadius*math.sin((math.pi/2)+i*dAngle)
+        
+        #one to the left...
+        innerPt1X = centerX+radius*math.cos((math.pi/2)+i*dAngle+dAngle/2) 
+        innerPt1Y = centerY-radius*math.sin((math.pi/2)+i*dAngle+dAngle/2)
+        #...and one to the right
+        innerPt2X = centerX+radius*math.cos((math.pi/2)+i*dAngle-dAngle/2)
+        innerPt2Y = centerY-radius*math.sin((math.pi/2)+i*dAngle-dAngle/2)
+        
+        canvas.create_polygon(outerPointX,outerPointY,innerPt1X,innerPt1Y,\
+        innerPt2X,innerPt2Y, fill=color)
     
 
 ### Run Function
