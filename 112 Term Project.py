@@ -135,7 +135,7 @@ class Bullet(object):
         if(not isinstance(other, Player)): # Other must be a Player
             return False
         else:
-            dist = (((other.x-data.sX)/data.pixel - self.cx)**2 + ((other.y-data.sY)/data.pixel - self.cy)**2)**0.5
+            dist = ((((other.x-data.sX)/data.pixel - self.cx)**2 + ((other.y-data.sY)/data.pixel - self.cy)**2)**0.5)*data.pixel
             return dist < self.r + other.r
 
 class Player(object):
@@ -181,25 +181,25 @@ class Enemy(Player):
                     lengths[dist] = [cell]
                 else:
                     lengths[dist].append(cell)
-        print(lengths)
+        # print(lengths)
         
         # print(getPlayerLocation(data, data.player))
-        # print(moves)
-        
-        nextMove = lengths[min(lengths.keys())][0]
-        
-        moves.append(nextMove)
-        visited.append((x,y))
+        print(moves)
+        for cell in nextCells:
+            nextMove = lengths[min(lengths.keys())][0]
             
-            # visited.append(nextMove)
-        tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited)
-        if tmpSolution != None:
-            return tmpSolution
-        moves.remove(nextMove)
-        lengths[min(lengths.keys())].pop(0)
-        if lengths[min(lengths.keys())]==[]:
-            del lengths[min(lengths.keys())]
-        visited.remove((x,y))
+            moves.append(nextMove)
+            visited.append((x,y))
+                
+                # visited.append(nextMove)
+            tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited)
+            if tmpSolution != None:
+                return tmpSolution
+            moves.remove(nextMove)
+            lengths[min(lengths.keys())].pop(0)
+            if lengths[min(lengths.keys())]==[]:
+                del lengths[min(lengths.keys())]
+            visited.remove((x,y))
         return None
 
     def draw(self, canvas, data):
@@ -420,11 +420,12 @@ def gameTimerFired(data):
             #if data.timerCount % 5 == 0:
             if bulletHitsWall(bullet, data):
                 # no need to keep track of off-screen bullets
-                #if bullet in data.bullets:
                 data.bullets.remove(bullet)
-            # if bullet.collidesWithPlayer(data.player, data):
-            #     data.bullets.remove(bullet)
-            #     data.mode = "gameOver"
+            if bullet.collidesWithPlayer(data.player, data):
+                data.bullets.remove(bullet)
+                print(bullet.cx, bullet.cy)
+                print((data.player.x-data.sX)/data.pixel, (data.player.y-data.sY)/data.pixel)
+                data.mode = "gameOver"
                 
                 
     if data.timerCount % 70 == 0 and data.enemy == None:
