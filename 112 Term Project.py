@@ -6,8 +6,9 @@ import pygame
 
 # inspiration for use of music from huahanq
 #todo: sound effect for bullets
-# pygame.mixer.music.load()
-# pygame.mixer.music.play(-1,0.0)
+pygame.mixer.init(48000)
+pygame.mixer.music.load("wii-mii-channel-8bit.mp3")
+pygame.mixer.music.play(-1,0.0)
 
 ### Levels
 
@@ -530,9 +531,9 @@ def drawCollected(canvas, data):
     canvas.create_text((x1+x2)/2, (y1+y2)/2, text="Stars: "+str(data.collected))
     
 def drawTime(canvas, data):
-    x1=data.width/2-data.margin
+    x1=data.width/2- 3*data.margin/2
     y1=data.height-30
-    x2=data.width/2 + data.margin
+    x2=data.width/2 + 3*data.margin/2
     y2=data.height-data.margin
     canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black")
     canvas.create_text(data.width/2, data.height-20, text=str(data.timerCount//20), fill="black")
@@ -727,9 +728,10 @@ def run(width=300, height=300):
     timerFiredWrapper(canvas, data)
     # and launch the app
     root.mainloop()  # blocks until window is closed
+    
     # inspiration from huahanq
     try:
-        # pygame.mixer.music.stop()
+        pygame.mixer.music.stop()
         pass
     except:
         pass
