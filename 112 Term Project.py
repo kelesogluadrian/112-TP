@@ -260,6 +260,7 @@ def init(data):
     data.lvl = level1
     data.can = level1Cannons
     data.stars = stars
+    data.path = None
     data.walls = []
     data.bullets = []
     data.cannons = []
@@ -305,6 +306,8 @@ def movePlayer(dx, dy, data):
         data.dx = 0
         data.dy = 0
         undo(dx, dy, data)
+        if data.enemy != None:
+            data.path = data.enemy.findPath(data)
         
 def undo(dx, dy, data):
     data.sX -= dx*data.speed
@@ -382,6 +385,7 @@ def gameKeyPressed(event, data):
         data.dx = 0
         data.dy = -1
         
+        
     if event.keysym == "Down" and data.dx==0 and data.dy==0 and\
                         not(data.prevdx==0 and data.prevdy==1) :
         data.dx = 0
@@ -391,7 +395,7 @@ def gameKeyPressed(event, data):
                         not(data.prevdx==1 and data.prevdy==0) :
         data.dx = 1
         data.dy = 0 
-             
+        
     if event.keysym == "Right" and data.dx==0 and data.dy==0 and\
                         not(data.prevdx==-1 and data.prevdy==0) :
         data.dx = -1
@@ -430,16 +434,15 @@ def gameTimerFired(data):
         9+16/2 = 12.5 = cx
         45.5 = cy
         """
-    # if data.timerCount % 10 == 0:
-    #     if data.enemy != None:
-    #         path = data.enemy.findPath(data)
-    #         print(path)
-    #         if path != None:
-    #             if path == []:
-    #                 data.mode = "gameOver"
-    #             else:
-    #                 data.enemy.x = path[0][0]
-    #                 data.enemy.y = path[0][1]  
+    if data.timerCount % 30 == 0:
+        if data.enemy != None:
+            if data.path != None:
+                if data.path == []:
+                    data.mode = "gameOver"
+                else:
+                    data.enemy.x = data.path[0][0]
+                    data.enemy.y = data.path[0][1]
+                    data.path.pop(0)  
          
     pX = (data.player.x-data.sX)/data.pixel
     pY = (data.player.y-data.sY)/data.pixel  
