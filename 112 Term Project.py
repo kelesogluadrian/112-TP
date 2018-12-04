@@ -4,9 +4,9 @@ import random
 import math
 import pygame
 
-# inspiration from huahanq
-pygame.mixer.music.load()
-pygame.mixer.music.play(-1,0.0)
+# inspiration for use of music from huahanq
+# pygame.mixer.music.load()
+# pygame.mixer.music.play(-1,0.0)
 
 ### Levels
 
@@ -186,25 +186,32 @@ class Enemy(Player):
                     lengths[dist] = [cell]
                 else:
                     lengths[dist].append(cell)
-        # print(lengths)
+        if lengths=={}:
+            return None
         
         # print(getPlayerLocation(data, data.player))
-        print(moves)
+        print(lengths)
         for cell in nextCells:
-            nextMove = lengths[min(lengths.keys())][0]
-            
-            moves.append(nextMove)
-            visited.append((x,y))
-                
+            try:
+                nextMove = lengths[min(lengths.keys())][0]
+                new_moves = list(moves)
+                new_moves.append(nextMove)
+                new_visited = list(visited)
+                new_visited.append((x,y))
+            except Exception as e:
+                print(repr(e))
+                print(lengths)
+                return None
                 # visited.append(nextMove)
-            tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited)
+            tmpSolution = self.findPath(data, nextMove[0], nextMove[1], new_moves, new_visited)
             if tmpSolution != None:
                 return tmpSolution
-            moves.remove(nextMove)
+            
+            # moves.remove(nextMove)
             lengths[min(lengths.keys())].pop(0)
             if lengths[min(lengths.keys())]==[]:
                 del lengths[min(lengths.keys())]
-            visited.remove((x,y))
+            # visited.remove((x,y))
         return None
 
     def draw(self, canvas, data):
@@ -278,6 +285,7 @@ def init(data):
     #center coordinates for the player
     data.cX = data.width/2
     data.cY = data.height//2
+    data.background = "black"
     data.buttonColor = "blue"
     data.clickColor = "red"
     data.player = Player(data.cX, data.cY, data.pixel/2.5)
@@ -343,6 +351,7 @@ def timerFired(data):
     elif data.mode == "gameOver":gameOverTimerFired(data)
 
 def redrawAll(canvas, data):
+    canvas.create_rectangle(0,0,data.width,data.height,fill=data.background)
     if data.mode == "game":     gameRedrawAll(canvas, data)
     elif data.mode == "start":  startRedrawAll(canvas, data)
     elif data.mode == "menu":   menuRedrawAll(canvas, data)
@@ -358,7 +367,7 @@ def startMousePressed(event, data):
      data.playButton.bottom>event.y>data.playButton.top:
         data.playButton.color = data.clickColor
         data.mode = "game"
-        pygame.mixer.music.rewind()
+        # pygame.mixer.music.rewind()
         
         data.playButton.color = data.buttonColor
     elif data.menuButton.left<event.x<data.menuButton.right and\
@@ -373,7 +382,7 @@ def startTimerFired(data):
     
     
 def startRedrawAll(canvas, data):
-    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", font="Arial 72 bold")
+    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", fill="white",font="Arial 72 bold")
     data.playButton.draw(canvas, data)
     data.menuButton.draw(canvas, data)
 
@@ -518,7 +527,7 @@ def drawWalls(canvas,data):
         canvas.create_rectangle(data.sX + data.pixel*(wallBlock.left),\
                         data.sY + data.pixel*(wallBlock.top),\
                         data.sX + data.pixel*(wallBlock.right), \
-                        data.sY + data.pixel*(wallBlock.bottom), fill ="black")
+                        data.sY + data.pixel*(wallBlock.bottom), fill ="OliveDrab1",outline="OliveDrab1")
 
 
 def drawPlayer(canvas, data):
@@ -726,7 +735,8 @@ def run(width=300, height=300):
     root.mainloop()  # blocks until window is closed
     # inspiration from huahanq
     try:
-        pygame.mixer.music.stop()
+        # pygame.mixer.music.stop()
+        pass
     except:
         pass
     print("bye!")
