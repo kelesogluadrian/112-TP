@@ -262,6 +262,7 @@ def init(data):
     data.lvl = level1
     data.can = level1Cannons
     data.stars = stars
+    data.endpoint = Wall(endpoint[0], endpoint[1])
     data.path = None
     data.walls = []
     data.bullets = []
@@ -458,6 +459,9 @@ def gameTimerFired(data):
         if star[0]==pX and star[1]==pY:
             data.stars.remove(star)
             data.collected += 1
+    e = data.endpoint
+    if e.left<pX<e.right and e.top<pY<e.bottom:
+        data.mode = "Win"
                 
 
     
@@ -533,7 +537,9 @@ def drawCollected(canvas, data):
     canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black")
     canvas.create_text((x1+x2)/2, (y1+y2)/2, text="Stars: "+str(data.collected))
     
-
+def drawEndpoint(canvas, data):
+    e = data.endpoint
+    canvas.create_rectangle(e.left, e.top, e.right, e.bottom, fill="gold")
     
 def gameRedrawAll(canvas, data):
     drawWalls(canvas, data)
@@ -542,6 +548,7 @@ def gameRedrawAll(canvas, data):
     drawPlayer(canvas, data)
     drawPauseButton(data.pauseButton, canvas, data)
     drawBullets(canvas, data)
+    drawEndpoint(canvas, data)
     if data.enemy != None:
         data.enemy.draw(canvas, data)
     drawCollected(canvas, data)
