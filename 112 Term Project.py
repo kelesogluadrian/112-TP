@@ -156,53 +156,50 @@ class Enemy(Player):
         super().__init__(x, y, size)
     #A* search algorithm with Manhattan heuristics
     #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
-    def findPath(self, data, x=None, y=None, moves=None):
-        
+    def findPath(self, data, x=None, y=None, moves=None, visited=None):
+        if visited == None:
+            visited = []
         if moves == None:
             moves = []
-            
-        # if visited == None:
-        #     visited = []
-            
         if x == None:
             x = self.x
-        
         if y == None:
             y = self.y
-        
-        #todo: finish this method
         #this will return a list of moves needed to get to the player
-        #backtracking template taken from 112 website
+        #backtracking template taken from 112 website        
+        nextCells = [(x+0,y+1),(x+0,y-1),(x+1,y+0),(x-1,y+0)]      
         
-        nextSteps = [(1,0),(-1,0),(0,1),(0,-1)]
-        nextCells =\
-           [(x+1,y+0),\
-            (x-1,y+0),\
-            (x+0,y+1),\
-            (x+0,y-1)]      
-              
-        if getPlayerLocation(data, data.player)==(x,y) or (len(moves)>0 and moves[-1] == getPlayerLocation(data, data.player)):
+        if getPlayerLocation(data, data.player)==(x,y) or (len(moves)>0 and\
+                            moves[-1] == getPlayerLocation(data, data.player)):
             return moves
             
-        # if lengths==None:
         lengths={}
-            
         for cell in nextCells:
-            if isValid(cell, data):
+            if isValid(cell, data) and cell not in visited:
                 dist = findDistToPlayer(cell, data)
                 if dist not in lengths.keys():
-                    lengths[dist]=cell
-        # print(lengths)
+                    lengths[dist] = [cell]
+                else:
+                    lengths[dist].append(cell)
+        print(lengths)
+        
         # print(getPlayerLocation(data, data.player))
         # print(moves)
-        nextMove = lengths[min(lengths.keys())]
+        
+        nextMove = lengths[min(lengths.keys())][0]
+        
         moves.append(nextMove)
+        visited.append((x,y))
             
             # visited.append(nextMove)
-        tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves)
+        tmpSolution = self.findPath(data, nextMove[0], nextMove[1], moves, visited)
         if tmpSolution != None:
             return tmpSolution
         moves.remove(nextMove)
+        lengths[min(lengths.keys())].pop(0)
+        if lengths[min(lengths.keys())]==[]:
+            del lengths[min(lengths.keys())]
+        visited.remove((x,y))
         return None
 
     def draw(self, canvas, data):
@@ -291,6 +288,9 @@ def init(data):
                                 data.buttonColor)
     data.mainMenuButton = Button("PLAY AGAIN", data.width/2, 4*data.height/6,\
                             data.buttonColor)
+    data.responses = ["Better luck next time!", "Every step you take.",\
+                "Not so smart, huh?", "There's no shame in losing."]
+    data.response = random.choice(data.responses)
     createWalls(data)
     createCannons(data)
 
@@ -403,7 +403,7 @@ def gameKeyPressed(event, data):
         
     if event.keysym == "p":
         data.mode = "pause"
-    
+    print("--------")
         
 def gameTimerFired(data):
     data.timerCount += 1
@@ -583,20 +583,18 @@ def menuRedrawAll(canvas, data):
     pass
 
 ### Game Over Mode
+
+            
 def gameOverMousePressed(event, data):
     if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
      data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
-         init(data)
-
+        init(data)
+        
 def gameOverKeyPressed(event,data):
     return
 
 def gameOverTimerFired(data):
     return
-    
-responses = ["Better luck next time!", "Every step you take.",\
-            "Not so smart, huh?", "There's no shame in losing."]
-response = random.choice(responses)
             
 def gameOverRedrawAll(canvas, data):
     drawWalls(canvas, data)
@@ -610,7 +608,7 @@ def gameOverRedrawAll(canvas, data):
     height = data.height/3
     canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="blue")
     
-    canvas.create_text(data.width/2, data.height/2-data.height/8, text=response, fill="white")
+    canvas.create_text(data.width/2, data.height/2-data.height/8, text=data.response, fill="white")
     data.mainMenuButton.draw(canvas, data)
     
     
