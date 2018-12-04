@@ -159,9 +159,10 @@ def getPlayerLocation(data, player):
 class Enemy(Player):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
+        
+    def findPath(self, data, x=None, y=None, moves=None, visited=None):
     #A* search algorithm with Manhattan heuristics
     #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
-    def findPath(self, data, x=None, y=None, moves=None, visited=None):
         if visited == None:
             visited = []
         if moves == None:
@@ -178,40 +179,26 @@ class Enemy(Player):
                             moves[-1] == getPlayerLocation(data, data.player)):
             return moves
             
-        lengths={}
+        lengths=[]
         for cell in nextCells:
             if isValid(cell, data) and cell not in visited:
                 dist = findDistToPlayer(cell, data)
-                if dist not in lengths.keys():
-                    lengths[dist] = [cell]
-                else:
-                    lengths[dist].append(cell)
-        if lengths=={}:
-            return None
-        
-        # print(getPlayerLocation(data, data.player))
-        print(lengths)
-        for cell in nextCells:
+                lengths.append((dist, cell))
+        lengths.sort() #so that it tries the shortest nextCell first
+        for _,cell in lengths:
             try:
-                nextMove = lengths[min(lengths.keys())][0]
+                nextMove = cell
                 new_moves = list(moves)
                 new_moves.append(nextMove)
                 new_visited = list(visited)
                 new_visited.append((x,y))
             except Exception as e:
-                print(repr(e))
-                print(lengths)
                 return None
                 # visited.append(nextMove)
             tmpSolution = self.findPath(data, nextMove[0], nextMove[1], new_moves, new_visited)
             if tmpSolution != None:
                 return tmpSolution
             
-            # moves.remove(nextMove)
-            lengths[min(lengths.keys())].pop(0)
-            if lengths[min(lengths.keys())]==[]:
-                del lengths[min(lengths.keys())]
-            # visited.remove((x,y))
         return None
 
     def draw(self, canvas, data):
@@ -420,7 +407,7 @@ def gameKeyPressed(event, data):
         
     if event.keysym == "p":
         data.mode = "pause"
-    print("--------")
+    
         
 def gameTimerFired(data):
     data.timerCount += 1
@@ -440,8 +427,6 @@ def gameTimerFired(data):
                 data.bullets.remove(bullet)
             if bullet.collidesWithPlayer(data.player, data):
                 data.bullets.remove(bullet)
-                print(bullet.cx, bullet.cy)
-                print((data.player.x-data.sX)/data.pixel, (data.player.y-data.sY)/data.pixel)
                 data.mode = "gameOver"
                 
                 
@@ -452,15 +437,12 @@ def gameTimerFired(data):
         9+16/2 = 12.5 = cx
         45.5 = cy
         """
-    if data.timerCount % 30 == 0:
-        if data.enemy != None:
-            if data.path != None:
-                if data.path == []:
-                    data.mode = "gameOver"
-                else:
-                    data.enemy.x = data.path[0][0]
-                    data.enemy.y = data.path[0][1]
-                    data.path.pop(0)  
+    if data.timerCount % 20 == 0 and data.enemy and data.path ==[]:
+        data.mode = "gameOver"
+    elif data.timerCount % 20 == 0 and data.enemy and data.path:
+        data.enemy.x = data.path[0][0]
+        data.enemy.y = data.path[0][1]
+        data.path.pop(0)  
          
     pX = (data.player.x-data.sX)/data.pixel
     pY = (data.player.y-data.sY)/data.pixel  
