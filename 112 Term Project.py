@@ -268,7 +268,7 @@ def init(data):
     data.margin = 10 # margin for the pause button
     # and scrollY
     data.sX = -200
-    data.sY = -1520
+    data.sY = -1520 #originally -1520
     #center coordinates for the player
     data.cX = data.width/2
     data.cY = data.height//2
@@ -369,7 +369,7 @@ def startTimerFired(data):
     
     
 def startRedrawAll(canvas, data):
-    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", fill="white",font="Arial 72 bold")
+    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", fill="white",font="Herculanum 72")
     data.playButton.draw(canvas, data)
     data.menuButton.draw(canvas, data)
 
@@ -528,9 +528,17 @@ def drawCollected(canvas, data):
     canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black")
     canvas.create_text((x1+x2)/2, (y1+y2)/2, text="Stars: "+str(data.collected))
     
+def drawTime(canvas, data):
+    x1=data.width/2-data.margin
+    y1=data.height-30
+    x2=data.width/2 + data.margin
+    y2=data.height-data.margin
+    canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black")
+    canvas.create_text(data.width/2, data.height-20, text=str(data.timerCount//20), fill="black")
+    
 def drawEndpoint(canvas, data):
     e = data.endpoint
-    canvas.create_rectangle(e.left, e.top, e.right, e.bottom, fill="gold")
+    canvas.create_rectangle(e.left, e.top, e.right, e.bottom, fill="white")
     
 def gameRedrawAll(canvas, data):
     drawWalls(canvas, data)
@@ -543,7 +551,8 @@ def gameRedrawAll(canvas, data):
     if data.enemy != None:
         data.enemy.draw(canvas, data)
     drawCollected(canvas, data)
-    canvas.create_text(data.width/2, data.height-10, text=str(data.timerCount))
+    drawTime(canvas, data)
+    
 
     
     
@@ -594,7 +603,9 @@ def menuRedrawAll(canvas, data):
 def gameOverMousePressed(event, data):
     if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
      data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
+        data.stars = stars
         init(data)
+        
         
 def gameOverKeyPressed(event,data):
     return
