@@ -19,7 +19,7 @@ level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
             [(17,36),(18,39)],[(13,35),(17,37)],[(11,35),(12,38)],
             [(8,35),(11,36)],[(8,28),(9,35)],[(7,22),(8,26)],[(7,27),(11,28)],
             [(8,28),(10,29)],[(12,27),(13,34)],[(11,29),(14,30)],
-            [(15,34),(19,35)],[(19,30),(20,35)],[(19,30),(23,31)],
+            [(14,34),(19,35)],[(19,30),(20,35)],[(19,30),(23,31)],
             [(22,27),(23,31)],[(22,27),(25,28)],[(25,26),(27,27)],
             [(26,22),(27,27)],[(22,22),(26,23)],[(23,25),(24,26)],
             [(20,22),(22,25)],[(18,28),(21,29)],[(19,26),(21,29)],
@@ -130,12 +130,12 @@ class Bullet(object):
               abs(other.bottom-self.cy) < self.r
             
 
-    def collidesWithPlayer(self, other):
+    def collidesWithPlayer(self, other, data):
         # Check if the bullet and player overlap at all
         if(not isinstance(other, Player)): # Other must be a Player
             return False
         else:
-            dist = ((other.x - self.cx)**2 + (other.y - self.cy)**2)**0.5
+            dist = (((other.x-data.sX)/data.pixel - self.cx)**2 + ((other.y-data.sY)/data.pixel - self.cy)**2)**0.5
             return dist < self.r + other.r
 
 class Player(object):
@@ -211,7 +211,7 @@ class Enemy(Player):
                 
 def isValid(cell, data):
     for wallBlock in data.walls:
-        if (data.pixel*wallBlock.left + data.sX < cell[0] < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < cell[1] < data.pixel*wallBlock.bottom + data.sY):
+        if (wallBlock.left < cell[0] < wallBlock.right and wallBlock.top < cell[1] < wallBlock.bottom):
             return False
     return True
 
@@ -253,12 +253,17 @@ class PauseButton(Button):
 #the animation framework is taken from 15-112 website
 def init(data):
     data.timerCount = 0
+    data.dx = 0
+    data.dy = 0
+    data.prevdx = 0
+    data.prevdy = 0
     data.lvl = level1
     data.can = level1Cannons
     data.stars = stars
     data.walls = []
     data.bullets = []
     data.cannons = []
+    data.speed = 10
     data.mode = "start"
     data.collected = 0
     data.pixel = 40 #the unit length in the game
@@ -271,7 +276,7 @@ def init(data):
     data.cY = data.height//2
     data.buttonColor = "blue"
     data.clickColor = "red"
-    data.player = Player(data.cX, data.cY, data.pixel/3)
+    data.player = Player(data.cX, data.cY, data.pixel/2.5)
     data.enemy = None 
     data.playButton = Button("PLAY", data.width/2, 3*data.height//5,\
                             data.buttonColor)
@@ -289,14 +294,21 @@ def init(data):
     createCannons(data)
 
 def movePlayer(dx, dy, data):
-    #move bit by bit, not until it hits a wall
+    #move until it hits a wall
     
-    data.sX += dx*data.pixel
-    data.sY -= dy*data.pixel
+    data.sX += dx*data.speed
+    data.sY -= dy*data.speed
     
     if hitsWall(data):
-        data.sX -= dx*data.pixel
-        data.sY += dy*data.pixel
+        data.prevdx = dx
+        data.prevdy = dy
+        data.dx = 0
+        data.dy = 0
+        undo(dx, dy, data)
+        
+def undo(dx, dy, data):
+    data.sX -= dx*data.speed
+    data.sY += dy*data.speed
         
 
 ### Mode Dispatcher
@@ -365,17 +377,25 @@ def gameMousePressed(event, data):
         data.pauseButton.color = data.buttonColor
 
 def gameKeyPressed(event, data):
-    if event.keysym == "Up":
-        movePlayer(0, -1, data)
+    if event.keysym == "Up" and data.dx==0 and data.dy==0 and\
+                        not(data.prevdx==0 and data.prevdy==-1) :
+        data.dx = 0
+        data.dy = -1
         
-    if event.keysym == "Down":
-        movePlayer(0, 1, data)
+    if event.keysym == "Down" and data.dx==0 and data.dy==0 and\
+                        not(data.prevdx==0 and data.prevdy==1) :
+        data.dx = 0
+        data.dy = 1
         
-    if event.keysym == "Left":
-        movePlayer(1, 0, data)   
+    if event.keysym == "Left" and data.dx==0 and data.dy==0 and\
+                        not(data.prevdx==1 and data.prevdy==0) :
+        data.dx = 1
+        data.dy = 0 
              
-    if event.keysym == "Right":
-        movePlayer(-1, 0, data)
+    if event.keysym == "Right" and data.dx==0 and data.dy==0 and\
+                        not(data.prevdx==-1 and data.prevdy==0) :
+        data.dx = -1
+        data.dy = 0
         
     if event.keysym == "p":
         data.mode = "pause"
@@ -383,7 +403,7 @@ def gameKeyPressed(event, data):
         
 def gameTimerFired(data):
     data.timerCount += 1
-    
+    movePlayer(data.dx, data.dy, data)
     if data.timerCount % 25 == 0:
     #from hw11
         for cannon in data.cannons:
@@ -398,25 +418,29 @@ def gameTimerFired(data):
                 # no need to keep track of off-screen bullets
                 #if bullet in data.bullets:
                 data.bullets.remove(bullet)
-            if bullet.collidesWithPlayer(data.player):
-                data.bullets.remove(bullet)
-                data.mode = "gameOver"
+            # if bullet.collidesWithPlayer(data.player, data):
+            #     data.bullets.remove(bullet)
+            #     data.mode = "gameOver"
                 
-    if data.timerCount % 30 == 0 and data.enemy == None:
+                
+    if data.timerCount % 70 == 0 and data.enemy == None:
         data.enemy = Enemy(12.5, 45.5, data.pixel/2.5)
         
         """"[(9,46),(16,47)]--> the wall above which the player starts
         9+16/2 = 12.5 = cx
         45.5 = cy
         """
-    # if data.timerCount % 4 == 0:
+    # if data.timerCount % 10 == 0:
     #     if data.enemy != None:
     #         path = data.enemy.findPath(data)
-    #         # print(path)
+    #         print(path)
     #         if path != None:
-    #             data.enemy.x += path[0][0]
-    #             data.enemy.y -= path[0][1]  
-                 
+    #             if path == []:
+    #                 data.mode = "gameOver"
+    #             else:
+    #                 data.enemy.x = path[0][0]
+    #                 data.enemy.y = path[0][1]  
+         
     pX = (data.player.x-data.sX)/data.pixel
     pY = (data.player.y-data.sY)/data.pixel  
     for star in data.stars:
@@ -510,6 +534,7 @@ def gameRedrawAll(canvas, data):
     if data.enemy != None:
         data.enemy.draw(canvas, data)
     drawCollected(canvas, data)
+    canvas.create_text(data.width/2, data.height-10, text=str(data.timerCount))
 
     
     
@@ -568,6 +593,7 @@ def gameOverTimerFired(data):
     
 responses = ["Better luck next time!", "Every step you take.",\
             "Not so smart, huh?", "There's no shame in losing."]
+response = random.choice(responses)
             
 def gameOverRedrawAll(canvas, data):
     drawWalls(canvas, data)
@@ -579,9 +605,9 @@ def gameOverRedrawAll(canvas, data):
         data.enemy.draw(canvas, data)
     width = data.width/3
     height = data.height/3
-    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width+width, data.height+height, fill="blue")
+    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="blue")
     
-    canvas.create_text(data.width/2, data.height/2-data.height/8, text=random.choice(responses), fill="white")
+    canvas.create_text(data.width/2, data.height/2-data.height/8, text=response, fill="white")
     data.mainMenuButton.draw(canvas, data)
     
     
@@ -593,8 +619,10 @@ def hitsWall(data):
     for wallBlock in data.walls:
         #hit from the left,right,below,above respectively
         #right-->(block is on the right of the player)
-        if (data.pixel*wallBlock.left + data.sX < data.player.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < data.player.y < data.pixel*wallBlock.bottom + data.sY) or\
-         (data.pixel*wallBlock.left + data.sX < data.player.x < data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY < data.player.y < data.pixel*wallBlock.bottom + data.sY):
+        if (data.pixel*wallBlock.left + data.sX <= data.player.x-data.player.r <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y <= data.pixel*wallBlock.bottom + data.sY) or\
+         (data.pixel*wallBlock.left + data.sX <= data.player.x+data.player.r <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y <= data.pixel*wallBlock.bottom + data.sY) or\
+         (data.pixel*wallBlock.left + data.sX <= data.player.x <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y-data.player.r <= data.pixel*wallBlock.bottom + data.sY) or\
+         (data.pixel*wallBlock.left + data.sX <= data.player.x <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y+data.player.r <= data.pixel*wallBlock.bottom + data.sY):
             return True
     return False
     
@@ -633,7 +661,7 @@ def drawStar(cX, cY, canvas, data, diameter=15, numPoints=5, color="gold"):
         canvas.create_polygon(outerPointX,outerPointY,innerPt1X,innerPt1Y,\
         innerPt2X,innerPt2Y, fill=color)
     
-
+    
 ### Run Function
 #from 112 website
 
@@ -664,7 +692,7 @@ def run(width=300, height=300):
     data = Struct()
     data.width = width
     data.height = height
-    data.timerDelay = 20 # milliseconds
+    data.timerDelay = 5 # milliseconds
     root = Tk()
     init(data)
     # create the root and the canvas
