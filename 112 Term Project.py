@@ -5,6 +5,7 @@ import math
 import pygame
 
 # inspiration for use of music from huahanq
+#todo: sound effect for bullets
 # pygame.mixer.music.load()
 # pygame.mixer.music.play(-1,0.0)
 
