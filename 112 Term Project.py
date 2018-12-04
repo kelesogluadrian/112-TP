@@ -2,6 +2,11 @@ from tkinter import *
 import time
 import random
 import math
+import pygame
+
+# inspiration from huahanq
+pygame.mixer.music.load()
+pygame.mixer.music.play(-1,0.0)
 
 ### Levels
 
@@ -54,8 +59,8 @@ level1Cannons = [ [(14,41),(15,42),(0,-1)],[(2,25),(3,26),(0,1)],
                 [(13,9),(14,10),(0,1)]]
                 
 stars = [(1.5,26.5),(3.5,6.5),(10.5,31.5),(25.5,23.5),(8.5,16.5),(12.5,16.5)]
-#todo: put coordinates for powerups
 
+endpoint = [(13,1),(14,2)]
 
 
 
@@ -352,6 +357,8 @@ def startMousePressed(event, data):
      data.playButton.bottom>event.y>data.playButton.top:
         data.playButton.color = data.clickColor
         data.mode = "game"
+        pygame.mixer.music.rewind()
+        
         data.playButton.color = data.buttonColor
     elif data.menuButton.left<event.x<data.menuButton.right and\
      data.menuButton.bottom>event.y>data.menuButton.top:
@@ -696,6 +703,7 @@ def run(width=300, height=300):
     data.height = height
     data.timerDelay = 5 # milliseconds
     root = Tk()
+    root.title("Tomb of Tut")
     init(data)
     # create the root and the canvas
     canvas = Canvas(root, width=data.width, height=data.height)
@@ -709,6 +717,11 @@ def run(width=300, height=300):
     timerFiredWrapper(canvas, data)
     # and launch the app
     root.mainloop()  # blocks until window is closed
+    # inspiration from huahanq
+    try:
+        pygame.mixer.music.stop()
+    except:
+        pass
     print("bye!")
 
 run(600, 600)
