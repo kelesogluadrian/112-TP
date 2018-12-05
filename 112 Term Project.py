@@ -1,3 +1,6 @@
+#Adrian Kelesoglou
+#AndrewID: akelesog
+
 from tkinter import *
 import time
 import random
@@ -383,8 +386,8 @@ def startKeyPressed(event, data):
     
 def startTimerFired(data):
     pass
-    
-    
+
+
 def startRedrawAll(canvas, data):
     canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", fill="white",font="Herculanum 72")
     data.playButton.draw(canvas, data)
@@ -456,7 +459,7 @@ def gameTimerFired(data):
         """
     if data.timerCount % 20 == 0 and data.enemy and data.path ==[]:
         data.mode = "gameOver"
-    elif data.timerCount % 20 == 0 and data.enemy and data.path:
+    elif data.timerCount % 17 == 0 and data.enemy and data.path:
         data.enemy.x = data.path[0][0]
         data.enemy.y = data.path[0][1]
         data.path.pop(0)  
@@ -527,7 +530,21 @@ def drawWalls(canvas,data):
                         data.sY + data.pixel*(wallBlock.top),\
                         data.sX + data.pixel*(wallBlock.right), \
                         data.sY + data.pixel*(wallBlock.bottom), fill ="saddle brown",outline="saddle brown")
-
+        # vert = abs(data.sY+data.pixel*(wallBlock.top)-\
+        #         (data.sY+data.pixel*(wallBlock.bottom)))//5
+        # horiz = abs(data.sX+data.pixel*(wallBlock.right)-\
+        #         (data.sX+data.pixel*(wallBlock.left)))//8
+        #         
+        # top = data.sY+data.pixel*(wallBlock.top)
+        # bottom = data.sY+data.pixel*(wallBlock.bottom)
+        # right = data.sX+data.pixel*(wallBlock.right)
+        # left = data.sX+data.pixel*(wallBlock.left)
+        # 
+        # for i in range(vert):
+        #     canvas.create_line(left,top+5*i,right,top+5*i, fill="black")
+        # 
+        #   for i in range(horiz):
+        #     canvas.create_line(left+8*i,top,left+8*i,bottom, fill="black")
 
 def drawPlayer(canvas, data):
     #placeholder for now
@@ -555,8 +572,27 @@ def drawTime(canvas, data):
     
 def drawEndpoint(canvas, data):
     e = data.endpoint
-    canvas.create_rectangle(e.left, e.top, e.right, e.bottom, fill="white")
-    
+    canvas.create_rectangle(data.sX+data.pixel*(e.left),\
+                            data.sY+data.pixel*(e.top),\
+                            data.sX+data.pixel*(e.right),\
+                            data.sY+data.pixel*(e.bottom), fill="gold")
+    canvas.create_rectangle(data.sX+data.pixel*(e.left)+3,\
+                            data.sY+data.pixel*(e.top)+3,\
+                            data.sX+data.pixel*(e.right)-3,\
+                            data.sY+data.pixel*(e.bottom)-3, fill="black")
+    canvas.create_rectangle(data.sX+data.pixel*(e.left)+6,\
+                            data.sY+data.pixel*(e.top)+6,\
+                            data.sX+data.pixel*(e.right)-6,\
+                            data.sY+data.pixel*(e.bottom)-6, fill="gold")
+    canvas.create_rectangle(data.sX+data.pixel*(e.left)+9,\
+                            data.sY+data.pixel*(e.top)+9,\
+                            data.sX+data.pixel*(e.right)-9,\
+                            data.sY+data.pixel*(e.bottom)-9, fill="black")
+    canvas.create_rectangle(data.sX+data.pixel*(e.left)+12,\
+                            data.sY+data.pixel*(e.top)+12,\
+                            data.sX+data.pixel*(e.right)-12,\
+                            data.sY+data.pixel*(e.bottom)-12, fill="gold")
+
 def gameRedrawAll(canvas, data):
     drawWalls(canvas, data)
     drawCannons(canvas, data)
@@ -680,9 +716,12 @@ def winMousePressed(event, data):
      data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
         data.stars = stars
         init(data)
-    if data.scoreButton.left<event.x<data.scoreButton.right and\
-        data.scoreButton.bottom>event.y>data.scoreButton.top:
-            pass #todo: leaderboard page
+    try:
+        if data.scoreButton.left<event.x<data.scoreButton.right and\
+            data.scoreButton.bottom>event.y>data.scoreButton.top:
+                pass #todo: leaderboard page
+    except:
+        pass
 
 def winRedrawAll(canvas, data):
     drawWalls(canvas, data)
@@ -696,10 +735,14 @@ def winRedrawAll(canvas, data):
     height = data.height/3
     canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="dark green")
     
-    canvas.create_text(data.width/2, data.height/2-data.height/8, \
+    canvas.create_text(data.width/2, data.height/2-120, \
                         text="You Win!", font="Times 32", fill="white")
-    canvas.create_text(data.width/2, data.height/2, \
-                    text="Time: "+str(data.timerCount//20) , font="Times 24", fill="white")
+    canvas.create_text(data.width/2, data.height/2-65, text="Time: " +\
+                str(data.timerCount//20), font="Times 22", fill="white")
+    canvas.create_text(data.width/2,data.height/2-25,text="Stars collected: "+\
+                    str(data.collected), font="Times 22", fill="white")
+    score = -(data.timerCount//20) + data.collected*60
+    canvas.create_text(data.width/2,data.height/2+20,text="Score: "+str(score), font="Times 24", fill="white")
     data.mainMenuButton.draw(canvas, data)
 
 ### Mode-blind functions
