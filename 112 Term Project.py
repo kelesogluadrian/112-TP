@@ -234,9 +234,9 @@ class Button(object):
         self.color = color
         self.name = name
         self.top = self.cy-20
-        self.left = self.cx-45
+        self.left = self.cx-50
         self.bottom = self.cy+20
-        self.right = self.cx+45
+        self.right = self.cx+50
     
     def draw(self, canvas, data):
         canvas.create_rectangle(self.left, self.top,\
@@ -306,6 +306,8 @@ def init(data):
                                 data.buttonColor)
     data.startScreenButton = Button("BACK", data.width/2, 8*data.height/10,\
                                 data.buttonColor)
+    data.lbButton = Button("LEADERBOARD", data.width/2, data.height/2+90,\
+                        data.buttonColor)
     data.responses = ["Better luck next time!", "Every step you take.",\
                 "Not so smart, huh?", "There's no shame in losing."]
     data.response = random.choice(data.responses)
@@ -688,6 +690,10 @@ def menuMousePressed(event, data):
     if data.startScreenButton.left<event.x<data.startScreenButton.right and\
      data.startScreenButton.bottom>event.y>data.startScreenButton.top:
          data.mode = "start"
+    
+    if data.lbButton.left<event.x<data.lbButton.right and\
+     data.lbButton.bottom>event.y>data.lbButton.top:
+         data.mode = "leaderboard"
 
 def menuKeyPressed(event, data):
     pass
@@ -700,6 +706,7 @@ def menuRedrawAll(canvas, data):
     data.musicOnButton.draw(canvas, data)
     data.musicOffButton.draw(canvas, data)
     data.startScreenButton.draw(canvas, data)
+    data.lbButton.draw(canvas, data)
     pass
 
 ### Game Over Mode
