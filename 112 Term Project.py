@@ -6,6 +6,7 @@ import time
 import random
 import math
 import pygame
+import string
 
 # inspiration for use of music from huahanq
 #pygame documentation: https://www.pygame.org/docs/ref/music.html
@@ -273,6 +274,7 @@ def init(data):
     data.speed = 10
     data.mode = "start"
     data.collected = 0
+    data.score = 0
     data.pixel = 40 #the unit length in the game
     data.margin = 10 # margin for the pause button
     # and scrollY
@@ -296,7 +298,7 @@ def init(data):
                                 data.buttonColor)
     data.quitButton = Button("QUIT", data.width/2, 3.8*data.height/5,\
                                 data.buttonColor)
-    data.mainMenuButton = Button("PLAY AGAIN", data.width/2, 4*data.height/6,\
+    data.mainMenuButton = Button("PLAY AGAIN", data.width/2, 5.2*data.height/7,\
                                 data.buttonColor)
     data.musicOnButton = Button("ON", data.width/2, data.height/2,\
                                 data.buttonColor)
@@ -310,6 +312,7 @@ def init(data):
     createWalls(data)
     createCannons(data)
     createStars(stars, data)
+    data.name = ""
 
 def movePlayer(dx, dy, data):
     #move until it hits a wall
@@ -339,6 +342,7 @@ def mousePressed(event,data):
     elif data.mode == "game":   gameMousePressed(event, data)
     elif data.mode == "gameOver":gameOverMousePressed(event, data)
     elif data.mode == "Win":    winMousePressed(event, data)
+    elif data.mode == "leaderboard":leaderboardMousePressed(event, data)
     
 def keyPressed(event, data):
     if data.mode == "start":    startKeyPressed(event,data)
@@ -347,6 +351,7 @@ def keyPressed(event, data):
     elif data.mode == "menu":   menuKeyPressed(event,data)
     elif data.mode == "gameOver":gameOverKeyPressed(event,data)
     elif data.mode == "Win":    winKeyPressed(event,data)
+    elif data.mode == "leaderboard":leaderboardKeyPressed(event,data)
 
 def timerFired(data):
     if data.mode == "game":     gameTimerFired(data)
@@ -355,6 +360,7 @@ def timerFired(data):
     elif data.mode == "start":  startTimerFired(data)
     elif data.mode == "gameOver":gameOverTimerFired(data)
     elif data.mode == "Win":    winTimerFired(data)
+    elif data.mode == "leaderboard":leaderboardTimerFired(data)
 
 def redrawAll(canvas, data):
     canvas.create_rectangle(0,0,data.width,data.height,fill=data.background)
@@ -364,8 +370,28 @@ def redrawAll(canvas, data):
     elif data.mode == "pause":  pauseRedrawAll(canvas, data)
     elif data.mode == "gameOver":gameOverRedrawAll(canvas, data)
     elif data.mode == "Win":    winRedrawAll(canvas,data)
+    elif data.mode == "leaderboard":leaderboardRedrawAll(canvas,data)
     
+### Leaderboard Mode
+def leaderboardKeyPressed(event,data):
+    pass
     
+def leaderboardMousePressed(event, data):
+    if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
+     data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
+        data.stars = stars
+        init(data)
+    
+def leaderboardTimerFired(data):
+    pass
+    
+def leaderboardRedrawAll(canvas,data):
+    width = data.width/3
+    height = data.height/3
+    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="OrangeRed3")
+    contents = readFile("Leaderboard.txt")
+    canvas.create_text(data.width/2, data.height/2-data.height/8, text=contents, font="Herculanum 20", fill="white")
+    data.mainMenuButton.draw(canvas, data)
     
 ### Start Mode
 """title, menu, play """
@@ -409,7 +435,6 @@ def gameKeyPressed(event, data):
         data.dx = 0
         data.dy = -1
         
-        
     if event.keysym == "Down" and data.dx==0 and data.dy==0 and\
                         not(data.prevdx==0 and data.prevdy==1) :
         data.dx = 0
@@ -427,6 +452,10 @@ def gameKeyPressed(event, data):
         
     if event.keysym == "p":
         data.mode = "pause"
+    
+    if event.keysym == "B":
+        data.sX = -240
+        data.sY = 100
     
         
 def gameTimerFired(data):
@@ -705,8 +734,18 @@ def gameOverRedrawAll(canvas, data):
     data.mainMenuButton.draw(canvas, data)
     
 ### Win Mode
-def winKeypressed(event, data):
-    pass
+def winKeyPressed(event, data):
+    if event.keysym in string.ascii_letters:
+        data.name += event.char
+    
+    if event.keysym == "BackSpace":
+        data.name = data.name[:-1]
+    
+    if event.keysym == "Return":
+        contents = readFile("Leaderboard.txt")
+        writeFile("Leaderboard.txt", contents + data.name+"   "*4+str(data.score))
+        sortLeaderBoard()
+        data.mode = "leaderboard"
     
 def winTimerFired(data):
     pass
@@ -719,9 +758,42 @@ def winMousePressed(event, data):
     try:
         if data.scoreButton.left<event.x<data.scoreButton.right and\
             data.scoreButton.bottom>event.y>data.scoreButton.top:
-                pass #todo: leaderboard page
+                data.mode = "leaderboard"
     except:
         pass
+        
+def getNames(lines):
+    names = []
+    for item in lines:
+        index=item.find("   ")
+        newItem = item[:index]
+        names.append(newItem)
+    return names
+    
+def getScores(lines):
+    scores = []
+    for item in lines:
+        index=item.find("   ")
+        newItem = item[index+3:]
+        scores.append(newItem)
+    return scores
+    
+    
+def sortLeaderBoard():
+    lines = readFile("Leaderboard.txt").splitlines()
+    names = getNames(lines)
+    scores = getScores(lines)
+    people = {}
+    for i in range(len(lines)):
+        people[scores[i]] = names[i]
+    scores.sort()
+    if len(lines)<10:
+        length = len(lines)
+    else:
+        length = 10
+    for i in range(length):
+        writeFile("Leaderboard.txt", people[scores[i]]+"    "*4+scores[i]+"\n")
+        
 
 def winRedrawAll(canvas, data):
     drawWalls(canvas, data)
@@ -741,9 +813,14 @@ def winRedrawAll(canvas, data):
                 str(data.timerCount//20), font="Times 22", fill="white")
     canvas.create_text(data.width/2,data.height/2-25,text="Stars collected: "+\
                     str(data.collected), font="Times 22", fill="white")
-    score = -(data.timerCount//20) + data.collected*60
-    canvas.create_text(data.width/2,data.height/2+20,text="Score: "+str(score), font="Times 24", fill="white")
+    data.score = -(data.timerCount//20) + data.collected*60
+    canvas.create_text(data.width/2,data.height/2+20,text="Score: "+str(data.score), font="Times 24", fill="white")
+    
+    
+    canvas.create_text(data.width/2-120, data.height/2+70, anchor=W, text="Enter your name: " + data.name, font="Times 24", fill="white")
     data.mainMenuButton.draw(canvas, data)
+    
+    
 
 ### Mode-blind functions
 
@@ -797,18 +874,29 @@ def drawStar(cX, cY, canvas, data, diameter=15, numPoints=5, color="gold"):
         
         canvas.create_polygon(outerPointX,outerPointY,innerPt1X,innerPt1Y,\
         innerPt2X,innerPt2Y, fill=color)
-    
+        
+#file IO functions taken from 15-112 website
+def readFile(path):
+    with open(path, "rt") as f:
+        return f.read()
+
+def writeFile(path, contents):
+    with open(path, "wt") as f:
+        f.write(contents)
     
 ### Run Function
 #from 112 website
 
 def run(width=300, height=300):
-    
     def redrawAllWrapper(canvas, data):
         canvas.delete(ALL)
         canvas.create_rectangle(0, 0, data.width, data.height,
                                 fill='white', width=0)
         redrawAll(canvas, data)
+        # if data.mode=="Win":
+        #     e1 = Entry()
+            # name = input(e1)
+            
         canvas.update()
 
     def mousePressedWrapper(event, canvas, data):
@@ -844,6 +932,7 @@ def run(width=300, height=300):
     root.bind("<Key>", lambda event:
                             keyPressedWrapper(event, canvas, data))
     timerFiredWrapper(canvas, data)
+    
     # and launch the app
     root.mainloop()  # blocks until window is closed
     
