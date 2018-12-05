@@ -5,51 +5,54 @@ import math
 import pygame
 
 # inspiration for use of music from huahanq
+#pygame documentation: https://www.pygame.org/docs/ref/music.html
 #todo: sound effect for bullets
 pygame.mixer.init(48000)
-pygame.mixer.music.load("wii-mii-channel-8bit.mp3")
+pygame.mixer.music.load("runescape-8-bit-music-egypt.mp3")
+#https://www.youtube.com/watch?v=dXIAcpJVjvA
 pygame.mixer.music.play(-1,0.0)
 
 ### Levels
 
 #levels are 2D lists that have topLeft and bottomRight of the blocks
-level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(20,45)],
+level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(21,46)],
             [(17,43),(18,44)],
             [(15,42),(16,46)],[(9,41),(10,46)],[(11,42),(15,43)],
             [(11,41),(14,42)],[(6,40),(10,41)],[(6,41),(7,42)],
-            [(3,42),(6,43)],[(2,38),(3,42)],[(4,39),(5,40)],
-            [(3,37),(5,38)],[(4,34),(5,37)],[(1,33),(5,34)],[(0,26),(1,33)],
-            [(1,27),(2,28)],[(1,25),(8,26)],[(2,30),(4,32)],[(4,30),(6,31)],
+            [(2,42),(7,43)],[(2,37),(3,42)],[(4,39),(5,40)],
+            [(3,37),(5,38)],[(4,34),(5,37)],[(1,33),(5,34)],[(0,24),(1,33)],
+            [(1,27),(2,28)],[(1,24),(8,25)],[(2,30),(4,32)],[(4,30),(6,31)],
             [(6,27),(7,38)],[(7,38),(14,39)],[(13,39),(14,40)],
             [(14,41),(15,42)],[(15,38),(16,40)],[(16,40),(18,41)],
             [(18,40),(19,43)],[(20,39),(21,44)],[(18,38),(21,39)],
             [(17,36),(18,39)],[(13,35),(17,37)],[(11,35),(12,38)],
-            [(8,35),(11,36)],[(8,28),(9,35)],[(7,22),(8,26)],[(7,27),(11,28)],
+            [(8,35),(11,36)],[(8,28),(9,35)],[(7,22),(8,25)],[(7,27),(11,28)],
             [(8,28),(10,29)],[(12,27),(13,34)],[(11,29),(14,30)],
             [(14,34),(19,35)],[(19,30),(20,35)],[(19,30),(23,31)],
             [(22,27),(23,31)],[(22,27),(25,28)],[(25,26),(27,27)],
             [(26,22),(27,27)],[(22,22),(26,23)],[(23,25),(24,26)],
             [(20,22),(22,25)],[(18,28),(21,29)],[(19,26),(21,29)],
-            [(17,26),(18,27)],[(9,24),(12,26)],[(9,17),(12,18)],
-            [(15,28),(17,29)],[(16,29),(17,30)],[(16,30),(18,33)],
+            [(17,26),(18,27)],[(9,25),(12,26)],[(10,24),(11,25)],
+            [(15,28),(17,29)],[(16,29),(17,30)],[(16,30),(17,33)],
+            [(17,31),(18,33)],
             [(12,25),(15,26)],[(14,26),(15,28)],[(8,22),(11,23)],
             [(18,23),(19,25)],[(12,22),(15,23)],[(13,21),(15,24)],
             [(16,23),(17,25)],[(15,23),(16,24)],[(16,20),(17,22)],
             [(17,21),(21,22)],[(14,12),(16,20)],[(11,19),(21,20)],
             [(11,20),(12,21)],[(9,19),(10,22)],[(16,17),(17,20)],
-            [(6,19),(9,20)],[(6,13),(7,19)],[(7,13),(9,14)],
+            [(6,19),(9,20)],[(6,13),(7,19)],[(7,13),(8,14)],
             [(10,14),(11,17)],[(12,12),(14,13)],[(20,8),(21,19)],
             [(19,12),(20,14)],[(18,15),(19,18)],[(17,11),(18,16)],
             [(14,10),(19,11)],[(12,8),(15,10)],[(6,10),(13,11)],
-            [(8,11),(10,12)],[(8,12),(9,13)],[(16,8),(20,9)],
-            [(16,6),(17,8)],[(11,6),(16,7)],
+            [(8,11),(10,12)],[(7,11),(8,13)],[(16,8),(20,9)],
+            [(16,6),(17,8)],[(11,6),(16,7)],[(9,17),(12,18)],
             [(8,6),(11,9)],[(6,5),(10,6)],[(6,7),(7,10)],
             [(1,7),(6,8)],[(4,5),(5,7)],[(1,1),(2,7)],
             [(2,1),(9,2)],[(8,2),(9,4)],[(9,3),(13,4)],
             [(3,3),(6,4)],[(6,3),(7,5)],[(12,1),(13,3)],
             [(12,0),(15,1)],[(14,1),(15,6)],[(11,4),(13,5)]]
 
-level1Cannons = [ [(14,41),(15,42),(0,-1)],[(2,25),(3,26),(0,1)],
+level1Cannons = [ [(14,41),(15,42),(0,-1)],[(2,24),(3,25),(0,1)],
                 [(8,30),(9,31),(1,0)],[(8,32),(9,33),(1,0)],
                 [(16,30),(17,31),(-1,0)],[(16,32),(17,33),(-1,0)],
                 [(17,26),(18,27),(0,-1)],[(23,25),(24,26),(1,0)],
@@ -60,7 +63,7 @@ level1Cannons = [ [(14,41),(15,42),(0,-1)],[(2,25),(3,26),(0,1)],
                 [(14,6),(15,7),(0,1)],[(3,3),(4,4),(0,1)],
                 [(13,9),(14,10),(0,1)]]
                 
-stars = [(1.5,26.5),(3.5,6.5),(10.5,31.5),(25.5,23.5),(8.5,16.5),(12.5,16.5)]
+stars = [(1.5,26.5),(3.5,6.5),(10.5,31.5),(25.5,23.5),(8.5,16.5),(13.5,16.5)]
 
 endpoint = [(13,1),(14,2)]
 
@@ -111,7 +114,7 @@ class Bullet(object):
         self.cy = cy
         self.r = 3
         self.direction = direction
-        self.speed = 0.5
+        self.speed = 0.2
     
     # View
     def draw(self, canvas):
@@ -162,7 +165,7 @@ class Enemy(Player):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
         
-    def findPath(self, data, x=None, y=None, moves=None, visited=None):
+    def findPath(self, data, x=None, y=None, moves=None, visited=None, depth=0):
     #A* search algorithm with Manhattan heuristics
     #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
         if visited == None:
@@ -178,7 +181,8 @@ class Enemy(Player):
         nextCells = [(x+0,y+1),(x+0,y-1),(x+1,y+0),(x-1,y+0)]      
         
         if getPlayerLocation(data, data.player)==(x,y) or (len(moves)>0 and\
-                            moves[-1] == getPlayerLocation(data, data.player)):
+                        moves[-1] == getPlayerLocation(data, data.player)) or\
+                        depth==20:
             return moves
             
         lengths=[]
@@ -197,7 +201,7 @@ class Enemy(Player):
             except Exception as e:
                 return None
                 # visited.append(nextMove)
-            tmpSolution = self.findPath(data, nextMove[0], nextMove[1], new_moves, new_visited)
+            tmpSolution = self.findPath(data, nextMove[0], nextMove[1], new_moves, new_visited, depth+1)
             if tmpSolution != None:
                 return tmpSolution
             
@@ -225,17 +229,17 @@ class Button(object):
         self.cy = cy
         self.color = color
         self.name = name
-        self.top = self.cy-10
-        self.left = self.cx-30
-        self.bottom = self.cy+10
-        self.right = self.cx+30
+        self.top = self.cy-20
+        self.left = self.cx-45
+        self.bottom = self.cy+20
+        self.right = self.cx+45
     
     def draw(self, canvas, data):
         canvas.create_rectangle(self.left, self.top,\
                         self.right,self.bottom,\
                         fill=self.color)
         canvas.create_text((self.left+self.right)/2,\
-                    (self.top+self.bottom)/2,text=self.name, fill="white")
+                    (self.top+self.bottom)/2,text=self.name, fill="black")
 
 class PauseButton(Button):
     def __init__(self, cx, cy, color):
@@ -257,7 +261,7 @@ def init(data):
     data.prevdy = 0
     data.lvl = level1
     data.can = level1Cannons
-    data.stars = stars
+    data.stars = []
     data.endpoint = Wall(endpoint[0], endpoint[1])
     data.path = None
     data.walls = []
@@ -275,7 +279,7 @@ def init(data):
     data.cX = data.width/2
     data.cY = data.height//2
     data.background = "black"
-    data.buttonColor = "blue"
+    data.buttonColor = "DarkGoldenrod1"
     data.clickColor = "red"
     data.player = Player(data.cX, data.cY, data.pixel/2.5)
     data.enemy = None 
@@ -285,17 +289,24 @@ def init(data):
                             data.buttonColor)
     data.pauseButton = PauseButton(data.width-data.margin-(data.pixel/2),\
                                 data.margin+data.pixel/2, data.buttonColor)
-    data.resumeButton = Button("RESUME",data.width/2, 3*data.height/5,\
+    data.resumeButton = Button("RESUME",data.width/2, 3.2*data.height/5,\
                                 data.buttonColor)
-    data.quitButton = Button("QUIT", data.width/2, 4*data.height/5,\
+    data.quitButton = Button("QUIT", data.width/2, 3.8*data.height/5,\
                                 data.buttonColor)
     data.mainMenuButton = Button("PLAY AGAIN", data.width/2, 4*data.height/6,\
-                            data.buttonColor)
+                                data.buttonColor)
+    data.musicOnButton = Button("ON", data.width/2, data.height/2,\
+                                data.buttonColor)
+    data.musicOffButton = Button("OFF", data.width/2+110, data.height/2,\
+                                data.buttonColor)
+    data.startScreenButton = Button("BACK", data.width/2, 8*data.height/10,\
+                                data.buttonColor)
     data.responses = ["Better luck next time!", "Every step you take.",\
                 "Not so smart, huh?", "There's no shame in losing."]
     data.response = random.choice(data.responses)
     createWalls(data)
     createCannons(data)
+    createStars(stars, data)
 
 def movePlayer(dx, dy, data):
     #move until it hits a wall
@@ -324,6 +335,7 @@ def mousePressed(event,data):
     elif data.mode == "pause":  pauseMousePressed(event, data)
     elif data.mode == "game":   gameMousePressed(event, data)
     elif data.mode == "gameOver":gameOverMousePressed(event, data)
+    elif data.mode == "Win":    winMousePressed(event, data)
     
 def keyPressed(event, data):
     if data.mode == "start":    startKeyPressed(event,data)
@@ -331,6 +343,7 @@ def keyPressed(event, data):
     elif data.mode == "pause":  pauseKeyPressed(event,data)
     elif data.mode == "menu":   menuKeyPressed(event,data)
     elif data.mode == "gameOver":gameOverKeyPressed(event,data)
+    elif data.mode == "Win":    winKeyPressed(event,data)
 
 def timerFired(data):
     if data.mode == "game":     gameTimerFired(data)
@@ -338,6 +351,7 @@ def timerFired(data):
     elif data.mode == "pause":  pauseTimerFired(data)
     elif data.mode == "start":  startTimerFired(data)
     elif data.mode == "gameOver":gameOverTimerFired(data)
+    elif data.mode == "Win":    winTimerFired(data)
 
 def redrawAll(canvas, data):
     canvas.create_rectangle(0,0,data.width,data.height,fill=data.background)
@@ -346,6 +360,7 @@ def redrawAll(canvas, data):
     elif data.mode == "menu":   menuRedrawAll(canvas, data)
     elif data.mode == "pause":  pauseRedrawAll(canvas, data)
     elif data.mode == "gameOver":gameOverRedrawAll(canvas, data)
+    elif data.mode == "Win":    winRedrawAll(canvas,data)
     
     
     
@@ -414,14 +429,14 @@ def gameKeyPressed(event, data):
 def gameTimerFired(data):
     data.timerCount += 1
     movePlayer(data.dx, data.dy, data)
-    if data.timerCount % 25 == 0:
+    if data.timerCount % 30 == 0:
     #from hw11
         for cannon in data.cannons:
             data.bullets.append(createBullet(cannon, data))
     #from hw11
     if data.bullets != []:
         for bullet in data.bullets:
-            if data.timerCount % 2 == 0: 
+            if data.timerCount % 1 == 0: 
                 bullet.moveBullet()
             #if data.timerCount % 5 == 0:
             if bulletHitsWall(bullet, data):
@@ -477,12 +492,12 @@ def drawPauseButton(pauseButton, canvas, data):
     canvas.create_rectangle(pauseButton.left, pauseButton.top, \
                             pauseButton.right, pauseButton.bottom,\
                             fill=data.pauseButton.color)
-    canvas.create_rectangle(pauseButton.left+5, pauseButton.top+2, \
-                            pauseButton.right-25, pauseButton.bottom-2,\
-                            fill="yellow")
-    canvas.create_rectangle(pauseButton.left+25, pauseButton.top+2, \
-                           pauseButton.right-5, pauseButton.bottom-2,\
-                           fill="yellow")
+    canvas.create_rectangle(pauseButton.left+7, pauseButton.top+4, \
+                            pauseButton.right-25, pauseButton.bottom-4,\
+                            fill="brown4")
+    canvas.create_rectangle(pauseButton.left+25, pauseButton.top+4, \
+                           pauseButton.right-7, pauseButton.bottom-4,\
+                           fill="brown4")
 
 def createCannons(data):
     for cannon in data.can:
@@ -490,9 +505,9 @@ def createCannons(data):
 
 def drawCannons(canvas, data):
     for cannon in data.cannons:
-        canvas.create_rectangle(data.sX+cannon.left*data.pixel, data.sY+cannon.top*data.pixel, data.sX+cannon.right*data.pixel, data.sY+cannon.bottom*data.pixel, fill="green")
+        canvas.create_rectangle(data.sX+cannon.left*data.pixel, data.sY+cannon.top*data.pixel, data.sX+cannon.right*data.pixel, data.sY+cannon.bottom*data.pixel, fill="firebrick4", outline="firebrick4")
     for cannon in data.cannons:
-        offset=20
+        offset=21
         centerx = (data.sX+cannon.left*data.pixel+data.sX+cannon.right*data.pixel)/2
         centery = (data.sY+cannon.top*data.pixel+data.sY+cannon.bottom*data.pixel)/2
         canvas.create_line(centerx,centery,centerx+cannon.direction[0]*offset,\
@@ -511,7 +526,7 @@ def drawWalls(canvas,data):
         canvas.create_rectangle(data.sX + data.pixel*(wallBlock.left),\
                         data.sY + data.pixel*(wallBlock.top),\
                         data.sX + data.pixel*(wallBlock.right), \
-                        data.sY + data.pixel*(wallBlock.bottom), fill ="OliveDrab1",outline="OliveDrab1")
+                        data.sY + data.pixel*(wallBlock.bottom), fill ="saddle brown",outline="saddle brown")
 
 
 def drawPlayer(canvas, data):
@@ -578,9 +593,18 @@ def pauseTimerFired(data):
     pass
     
 def pauseRedrawAll(canvas, data):
-    canvas.create_rectangle(0,0,data.width, data.height,fill="light grey")
-    canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED")
-    canvas.create_text(data.width/2, data.height/2, text="Press 'p' to resume")
+    drawWalls(canvas, data)
+    drawCannons(canvas, data)
+    drawPlayer(canvas, data)
+    drawPauseButton(data.pauseButton, canvas, data)
+    drawBullets(canvas, data)
+    if data.enemy != None:
+        data.enemy.draw(canvas, data)
+    width = data.width/3
+    height = data.height/3
+    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="OrangeRed3")
+    canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED", font="Times 20", fill="white")
+    canvas.create_text(data.width/2, data.height/2, text="Press 'p' to resume", font="Times 15", fill="white")
     data.resumeButton.draw(canvas, data)
     data.quitButton.draw(canvas, data)
     
@@ -588,7 +612,17 @@ def pauseRedrawAll(canvas, data):
 ### Menu Mode
 """different players to choose from, settings (and powerups) """
 def menuMousePressed(event, data):
-    pass
+    if data.musicOnButton.left<event.x<data.musicOnButton.right and\
+     data.musicOnButton.bottom>event.y>data.musicOnButton.top:
+         pygame.mixer.music.unpause()
+         
+    if data.musicOffButton.left<event.x<data.musicOffButton.right and\
+     data.musicOffButton.bottom>event.y>data.musicOffButton.top:
+         pygame.mixer.music.pause()
+    
+    if data.startScreenButton.left<event.x<data.startScreenButton.right and\
+     data.startScreenButton.bottom>event.y>data.startScreenButton.top:
+         data.mode = "start"
 
 def menuKeyPressed(event, data):
     pass
@@ -597,6 +631,10 @@ def menuTimerFired(data):
     pass
 
 def menuRedrawAll(canvas, data):
+    canvas.create_text(200, data.height/2,text="Music:", font="Herculanum 25 bold", fill="orange2")
+    data.musicOnButton.draw(canvas, data)
+    data.musicOffButton.draw(canvas, data)
+    data.startScreenButton.draw(canvas, data)
     pass
 
 ### Game Over Mode
@@ -625,12 +663,44 @@ def gameOverRedrawAll(canvas, data):
         data.enemy.draw(canvas, data)
     width = data.width/3
     height = data.height/3
-    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="blue")
+    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="OrangeRed3")
     
-    canvas.create_text(data.width/2, data.height/2-data.height/8, text=data.response, fill="white")
+    canvas.create_text(data.width/2, data.height/2-data.height/8, text=data.response, font="Times 20", fill="white")
     data.mainMenuButton.draw(canvas, data)
     
+### Win Mode
+def winKeypressed(event, data):
+    pass
     
+def winTimerFired(data):
+    pass
+    
+def winMousePressed(event, data):
+    if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
+     data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
+        data.stars = stars
+        init(data)
+    if data.scoreButton.left<event.x<data.scoreButton.right and\
+        data.scoreButton.bottom>event.y>data.scoreButton.top:
+            pass #todo: leaderboard page
+
+def winRedrawAll(canvas, data):
+    drawWalls(canvas, data)
+    drawCannons(canvas, data)
+    drawPlayer(canvas, data)
+    drawPauseButton(data.pauseButton, canvas, data)
+    drawBullets(canvas, data)
+    if data.enemy != None:
+        data.enemy.draw(canvas, data)
+    width = data.width/3
+    height = data.height/3
+    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="dark green")
+    
+    canvas.create_text(data.width/2, data.height/2-data.height/8, \
+                        text="You Win!", font="Times 32", fill="white")
+    canvas.create_text(data.width/2, data.height/2, \
+                    text="Time: "+str(data.timerCount//20) , font="Times 24", fill="white")
+    data.mainMenuButton.draw(canvas, data)
 
 ### Mode-blind functions
 
@@ -652,7 +722,11 @@ def bulletHitsWall(bullet, data):
          (data.pixel*wallBlock.left + data.sX <= data.sX + data.pixel*bullet.cx <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.sY+ data.pixel*bullet.cy <= data.pixel*wallBlock.bottom + data.sY):
             return True
     return False
-
+    
+def createStars(starList, data):
+    for star in starList:
+        data.stars.append(star)
+    
 def drawStars(canvas, data):
     for star in data.stars:
         drawStar(star[0],star[1], canvas, data)
@@ -715,6 +789,7 @@ def run(width=300, height=300):
     data.timerDelay = 5 # milliseconds
     root = Tk()
     root.title("Tomb of Tut")
+    root.resizable(width=False, height=False)
     init(data)
     # create the root and the canvas
     canvas = Canvas(root, width=data.width, height=data.height)
@@ -732,7 +807,6 @@ def run(width=300, height=300):
     # inspiration from huahanq
     try:
         pygame.mixer.music.stop()
-        pass
     except:
         pass
     print("bye!")
