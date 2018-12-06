@@ -374,26 +374,7 @@ def redrawAll(canvas, data):
     elif data.mode == "Win":    winRedrawAll(canvas,data)
     elif data.mode == "leaderboard":leaderboardRedrawAll(canvas,data)
     
-### Leaderboard Mode
-def leaderboardKeyPressed(event,data):
-    pass
-    
-def leaderboardMousePressed(event, data):
-    if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
-     data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
-        data.stars = stars
-        init(data)
-    
-def leaderboardTimerFired(data):
-    pass
-    
-def leaderboardRedrawAll(canvas,data):
-    width = data.width/3
-    height = data.height/3
-    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="OrangeRed3")
-    contents = readFile("Leaderboard.txt")
-    canvas.create_text(data.width/2, data.height/2-data.height/8, text=contents, font="Herculanum 20", fill="white")
-    data.mainMenuButton.draw(canvas, data)
+
     
 ### Start Mode
 """title, menu, play """
@@ -748,9 +729,11 @@ def winKeyPressed(event, data):
     if event.keysym == "BackSpace":
         data.name = data.name[:-1]
     
-    if event.keysym == "Return":
+    if event.keysym == "Return" and len(data.name)==6:
         contents = readFile("Leaderboard.txt")
-        writeFile("Leaderboard.txt", contents + data.name+"   "*4+str(data.score))
+        data.name = data.name.upper()
+        writeFile("Leaderboard.txt", contents+data.name+"    "*9 +\
+                    str(data.score)+ "\n")
         sortLeaderBoard()
         data.mode = "leaderboard"
     
@@ -772,7 +755,7 @@ def winMousePressed(event, data):
 def getNames(lines):
     names = []
     for item in lines:
-        index=item.find("   ")
+        index=item.find(" ")
         newItem = item[:index]
         names.append(newItem)
     return names
@@ -780,8 +763,11 @@ def getNames(lines):
 def getScores(lines):
     scores = []
     for item in lines:
-        index=item.find("   ")
-        newItem = item[index+3:]
+        indexplus = 0
+        for char in item[42:]:
+            if char=="-" or char in string.digits: indexplus +=1
+            
+        newItem = item[42:42+indexplus]#because 6 characters + 16 spaces before score
         scores.append(newItem)
     return scores
     
@@ -790,16 +776,29 @@ def sortLeaderBoard():
     lines = readFile("Leaderboard.txt").splitlines()
     names = getNames(lines)
     scores = getScores(lines)
+    print("names: ",names)
+    print("scores: ",scores)
     people = {}
     for i in range(len(lines)):
-        people[scores[i]] = names[i]
+        try:
+            people[scores[i]].append(names[i])
+        except:
+            people[scores[i]] = [names[i]]
+            
     scores.sort()
+    scores.reverse()
+    print(scores)
     if len(lines)<10:
         length = len(lines)
     else:
         length = 10
     for i in range(length):
-        writeFile("Leaderboard.txt", people[scores[i]]+"    "*4+scores[i]+"\n")
+        if i==0:
+            cts = ""
+        else:
+            cts = readFile("Leaderboard.txt")
+        writeFile("Leaderboard.txt", cts + people[scores[i]][0]+"    "*9+scores[i]+ "\n")
+        people[scores[i]].pop(0)
         
 
 def winRedrawAll(canvas, data):
@@ -821,12 +820,42 @@ def winRedrawAll(canvas, data):
     canvas.create_text(data.width/2,data.height/2-25,text="Stars collected: "+\
                     str(data.collected), font="Times 22", fill="white")
     data.score = -(data.timerCount//20) + data.collected*60
-    canvas.create_text(data.width/2,data.height/2+20,text="Score: "+str(data.score), font="Times 24", fill="white")
+    canvas.create_text(data.width/2,data.height/2+20,\
+                    text="Score: "+str(data.score), font="Times 24",\
+                    fill="white")
+    canvas.create_text(data.width/2-120, data.height/2+60, anchor=W,\
+                    text="Enter your name: " + data.name, font="Times 24",\
+                    fill="white")
+    canvas.create_text(data.width/2,data.height/2+100,\
+                    text="(Exactly 6 characters, press Enter to save)",\
+                    font="Times 16", fill="white")
     
-    
-    canvas.create_text(data.width/2-120, data.height/2+70, anchor=W, text="Enter your name: " + data.name, font="Times 24", fill="white")
     data.mainMenuButton.draw(canvas, data)
+
+### Leaderboard Mode
+def leaderboardKeyPressed(event,data):
+    pass
     
+def leaderboardMousePressed(event, data):
+    if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
+     data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
+        data.stars = stars
+        init(data)
+    
+def leaderboardTimerFired(data):
+    pass
+    
+def leaderboardRedrawAll(canvas,data):
+    width = data.width/3
+    height = data.height/3
+    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="dark green")
+    contents = readFile("Leaderboard.txt")
+    canvas.create_text(data.width/2-width+40, data.height/2-data.height/4,\
+                    anchor=NW, text=contents, font="Herculanum 20",\
+                    fill="white")
+    canvas.create_text(data.width/2, data.height/2-170, text="TOP 10",\
+                font="Herculanum 32", fill="white")
+    data.mainMenuButton.draw(canvas, data)
     
 
 ### Mode-blind functions
@@ -899,11 +928,7 @@ def run(width=300, height=300):
         canvas.delete(ALL)
         canvas.create_rectangle(0, 0, data.width, data.height,
                                 fill='white', width=0)
-        redrawAll(canvas, data)
-        # if data.mode=="Win":
-        #     e1 = Entry()
-            # name = input(e1)
-            
+        redrawAll(canvas, data)            
         canvas.update()
 
     def mousePressedWrapper(event, canvas, data):
