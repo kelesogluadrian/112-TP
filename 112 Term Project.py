@@ -10,14 +10,12 @@ import string
 
 # inspiration for use of music from huahanq
 #pygame documentation: https://www.pygame.org/docs/ref/music.html
-#todo: sound effect for bullets
 pygame.mixer.init(48000)
 pygame.mixer.music.load("runescape-8-bit-music-egypt.mp3")
 #https://www.youtube.com/watch?v=dXIAcpJVjvA
 pygame.mixer.music.play(-1,0.0)
 
 ### Levels
-
 #levels are 2D lists that have topLeft and bottomRight of the blocks
 level1 = [[(9,46),(16,47)],[(16,45),(19,46)],[(19,44),(21,46)],
             [(17,43),(18,44)],
@@ -143,13 +141,13 @@ class Bullet(object):
               abs(other.top-self.cy) < self.r or \
               abs(other.bottom-self.cy) < self.r
             
-
     def collidesWithPlayer(self, other, data):
         # Check if the bullet and player overlap at all
         if(not isinstance(other, Player)): # Other must be a Player
             return False
         else:
-            dist = ((((other.x-data.sX)/data.pixel - self.cx)**2 + ((other.y-data.sY)/data.pixel - self.cy)**2)**0.5)*data.pixel
+            dist = ((((other.x-data.sX)/data.pixel - self.cx)**2 +\
+                ((other.y-data.sY)/data.pixel-self.cy)**2) **0.5)*data.pixel
             return dist < self.r + other.r
 
 class Player(object):
@@ -169,7 +167,8 @@ class Enemy(Player):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
         
-    def findPath(self, data, x=None, y=None, moves=None, visited=None, depth=0):
+    def findPath(self, data, x=None, y=None, moves=None, visited=None,\
+                    depth=0):
     #A* search algorithm with Manhattan heuristics
     #inspiration:https://www.geeksforgeeks.org/a-search-algorithm/
         if visited == None:
@@ -198,23 +197,25 @@ class Enemy(Player):
         for _,cell in lengths:
             try:
                 nextMove = cell
-                new_moves = list(moves)
-                new_moves.append(nextMove)
-                new_visited = list(visited)
-                new_visited.append((x,y))
+                newMoves = list(moves)
+                newMoves.append(nextMove)
+                newVisited = list(visited)
+                newVisited.append((x,y))
             except Exception as e:
                 return None
-                # visited.append(nextMove)
-            tmpSolution = self.findPath(data, nextMove[0], nextMove[1], new_moves, new_visited, depth+1)
+            tmpSolution = self.findPath(data, nextMove[0], nextMove[1],\
+                                        newMoves, newVisited, depth+1)
             if tmpSolution != None:
                 return tmpSolution
             
         return None
 
     def draw(self, canvas, data):
-        canvas.create_rectangle(data.pixel*self.x-self.r+data.sX, data.pixel*self.y-self.r+data.sY, data.pixel*self.x+self.r+data.sX, data.pixel*self.y+self.r+data.sY, fill="blue")
-                
-                
+        canvas.create_rectangle(data.pixel*self.x-self.r+data.sX,\
+                                data.pixel*self.y-self.r+data.sY,\
+                                data.pixel*self.x+self.r+data.sX, \
+                                data.pixel*self.y+self.r+data.sY, fill="blue")
+
 def isValid(cell, data):
     for wallBlock in data.walls:
         if (wallBlock.left < cell[0] < wallBlock.right and wallBlock.top < cell[1] < wallBlock.bottom):
@@ -226,7 +227,6 @@ def findDistToPlayer(cell, data):
     y = abs(cell[1]-((data.player.y-data.sY)/data.pixel))
     return x+y
         
-
 class Button(object):
     def __init__(self, name, cx, cy, color):
         self.cx = cx
@@ -254,7 +254,6 @@ class PauseButton(Button):
         self.right = cx+self.size
         self.color = color
 
-
 ### Graphics
 #the animation framework is taken from 15-112 website
 def init(data):
@@ -277,9 +276,8 @@ def init(data):
     data.score = 0
     data.pixel = 40 #the unit length in the game
     data.margin = 10 # margin for the pause button
-    # and scrollY
     data.sX = -200
-    data.sY = -1520 #originally -1520
+    data.sY = -1520
     #center coordinates for the player
     data.cX = data.width/2
     data.cY = data.height//2
@@ -298,8 +296,8 @@ def init(data):
                                 data.buttonColor)
     data.quitButton = Button("QUIT", data.width/2, 3.8*data.height/5,\
                                 data.buttonColor)
-    data.mainMenuButton = Button("PLAY AGAIN", data.width/2, 5.2*data.height/7,\
-                                data.buttonColor)
+    data.mainMenuButton = Button("PLAY AGAIN", data.width/2, \
+                                5.2*data.height/7,data.buttonColor)
     data.musicOnButton = Button("ON", data.width/2, data.height/2,\
                                 data.buttonColor)
     data.musicOffButton = Button("OFF", data.width/2+110, data.height/2,\
@@ -373,11 +371,8 @@ def redrawAll(canvas, data):
     elif data.mode == "gameOver":gameOverRedrawAll(canvas, data)
     elif data.mode == "Win":    winRedrawAll(canvas,data)
     elif data.mode == "leaderboard":leaderboardRedrawAll(canvas,data)
-    
-
-    
+ 
 ### Start Mode
-"""title, menu, play """
 def startMousePressed(event, data):
     if data.playButton.left<event.x<data.playButton.right and\
      data.playButton.bottom>event.y>data.playButton.top:
@@ -396,15 +391,14 @@ def startKeyPressed(event, data):
 def startTimerFired(data):
     pass
 
-
 def startRedrawAll(canvas, data):
-    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut", fill="white",font="Herculanum 72")
+    canvas.create_text(data.width/2, data.height/4, text="Tomb of Tut",\
+                        fill="white",font="Herculanum 72")
     data.playButton.draw(canvas, data)
     data.menuButton.draw(canvas, data)
 
 
 ### Game Mode #############
-"""also there should be powerups along the way"""
 def gameMousePressed(event, data):
     if data.pauseButton.left<event.x<data.pauseButton.right and\
      data.pauseButton.bottom>event.y>data.pauseButton.top:
@@ -486,13 +480,10 @@ def gameTimerFired(data):
     if e.left<pX<e.right and e.top<pY<e.bottom:
         data.mode = "Win"
                 
-
-    
 def createBullet(cannon, data):
         offset = 21/data.pixel #data.pixel/2 + 1 (plus something)
         x = cannon.cx + offset*cannon.direction[0]
         y = cannon.cy + offset*cannon.direction[1]
-        
         return Bullet(x, y, cannon.direction) 
 
 def drawBullets(canvas, data):
@@ -520,18 +511,24 @@ def createCannons(data):
 
 def drawCannons(canvas, data):
     for cannon in data.cannons:
-        canvas.create_rectangle(data.sX+cannon.left*data.pixel, data.sY+cannon.top*data.pixel, data.sX+cannon.right*data.pixel, data.sY+cannon.bottom*data.pixel, fill="firebrick4", outline="firebrick4")
+        canvas.create_rectangle(data.sX+cannon.left*data.pixel,\
+                                data.sY+cannon.top*data.pixel,\
+                                data.sX+cannon.right*data.pixel,\
+                                data.sY+cannon.bottom*data.pixel,\
+                                fill="firebrick4", outline="firebrick4")
     for cannon in data.cannons:
         offset=21
-        centerx = (data.sX+cannon.left*data.pixel+data.sX+cannon.right*data.pixel)/2
-        centery = (data.sY+cannon.top*data.pixel+data.sY+cannon.bottom*data.pixel)/2
+        centerx = (data.sX + cannon.left*data.pixel + data.sX +\
+                    cannon.right*data.pixel)/2
+        centery = (data.sY + cannon.top*data.pixel + data.sY +\
+                    cannon.bottom*data.pixel)/2
         canvas.create_line(centerx,centery,centerx+cannon.direction[0]*offset,\
                 centery+cannon.direction[1]*offset, width=5, fill="black")
-        canvas.create_rectangle(centerx-2,centery-2,centerx+2,centery+2, fill="black")
+        canvas.create_rectangle(centerx-2,centery-2,centerx+2,centery+2,\
+                                fill="black")
         
 
 def createWalls(data):
-    #todo: define a level chooser, like a mode dispatcher?
     for block in data.lvl:
         a = Wall(block[0],block[1])
         data.walls.append(a)
@@ -541,26 +538,10 @@ def drawWalls(canvas,data):
         canvas.create_rectangle(data.sX + data.pixel*(wallBlock.left),\
                         data.sY + data.pixel*(wallBlock.top),\
                         data.sX + data.pixel*(wallBlock.right), \
-                        data.sY + data.pixel*(wallBlock.bottom), fill ="saddle brown",outline="saddle brown")
-        # vert = abs(data.sY+data.pixel*(wallBlock.top)-\
-        #         (data.sY+data.pixel*(wallBlock.bottom)))//5
-        # horiz = abs(data.sX+data.pixel*(wallBlock.right)-\
-        #         (data.sX+data.pixel*(wallBlock.left)))//8
-        #         
-        # top = data.sY+data.pixel*(wallBlock.top)
-        # bottom = data.sY+data.pixel*(wallBlock.bottom)
-        # right = data.sX+data.pixel*(wallBlock.right)
-        # left = data.sX+data.pixel*(wallBlock.left)
-        # 
-        # for i in range(vert):
-        #     canvas.create_line(left,top+5*i,right,top+5*i, fill="black")
-        # 
-        #   for i in range(horiz):
-        #     canvas.create_line(left+8*i,top,left+8*i,bottom, fill="black")
+                        data.sY + data.pixel*(wallBlock.bottom), \
+                        fill ="saddle brown",outline="saddle brown")
 
-def drawPlayer(canvas, data):
-    #placeholder for now
-    #TODO: define images, or shapes for the player and replace the rect
+def drawPlayer(canvas, data):    
     canvas.create_rectangle(data.player.x - data.player.r,\
                             data.player.y - data.player.r,\
                             data.player.x + data.player.r,\
@@ -650,9 +631,12 @@ def pauseRedrawAll(canvas, data):
         data.enemy.draw(canvas, data)
     width = data.width/3
     height = data.height/3
-    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="OrangeRed3")
-    canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED", font="Times 20", fill="white")
-    canvas.create_text(data.width/2, data.height/2, text="Press 'p' to resume", font="Times 15", fill="white")
+    canvas.create_rectangle(data.width/2-width, data.height/2-height,\
+                data.width/2+width, data.height/2+height, fill="OrangeRed3")
+    canvas.create_text(data.width/2, data.height/3, text="GAME PAUSED",\
+                        font="Times 20", fill="white")
+    canvas.create_text(data.width/2, data.height/2, \
+                    text="Press 'p' to resume", font="Times 15", fill="white")
     data.resumeButton.draw(canvas, data)
     data.quitButton.draw(canvas, data)
     
@@ -683,7 +667,8 @@ def menuTimerFired(data):
     pass
 
 def menuRedrawAll(canvas, data):
-    canvas.create_text(200, data.height/2,text="Music:", font="Herculanum 25 bold", fill="orange2")
+    canvas.create_text(200, data.height/2,text="Music:", \
+                    font="Herculanum 25 bold", fill="orange2")
     data.musicOnButton.draw(canvas, data)
     data.musicOffButton.draw(canvas, data)
     data.startScreenButton.draw(canvas, data)
@@ -691,14 +676,11 @@ def menuRedrawAll(canvas, data):
     pass
 
 ### Game Over Mode
-
-            
 def gameOverMousePressed(event, data):
     if data.mainMenuButton.left<event.x<data.mainMenuButton.right and\
      data.mainMenuButton.bottom>event.y>data.mainMenuButton.top:
         data.stars = stars
         init(data)
-        
         
 def gameOverKeyPressed(event,data):
     return
@@ -716,9 +698,10 @@ def gameOverRedrawAll(canvas, data):
         data.enemy.draw(canvas, data)
     width = data.width/3
     height = data.height/3
-    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="OrangeRed3")
-    
-    canvas.create_text(data.width/2, data.height/2-data.height/8, text=data.response, font="Times 20", fill="white")
+    canvas.create_rectangle(data.width/2-width, data.height/2-height,\
+                data.width/2+width, data.height/2+height, fill="OrangeRed3")
+    canvas.create_text(data.width/2, data.height/2-data.height/8,\
+                    text=data.response, font="Times 20", fill="white")
     data.mainMenuButton.draw(canvas, data)
     
 ### Win Mode
@@ -765,9 +748,11 @@ def getScores(lines):
     for item in lines:
         indexplus = 0
         for char in item[42:]:
-            if char=="-" or char in string.digits: indexplus +=1
+            if char=="-" or char in string.digits:
+                indexplus +=1
             
-        newItem = item[42:42+indexplus]#because 6 characters + 16 spaces before score
+        newItem = item[42:42+indexplus]
+        #because 6 characters + 36 spaces before score
         scores.append(newItem)
     return scores
     
@@ -797,7 +782,8 @@ def sortLeaderBoard():
             cts = ""
         else:
             cts = readFile("Leaderboard.txt")
-        writeFile("Leaderboard.txt", cts + people[scores[i]][0]+"    "*9+scores[i]+ "\n")
+        writeFile("Leaderboard.txt", cts + people[scores[i]][0]+\
+                    "    "*9+scores[i]+ "\n")
         people[scores[i]].pop(0)
         
 
@@ -811,7 +797,8 @@ def winRedrawAll(canvas, data):
         data.enemy.draw(canvas, data)
     width = data.width/3
     height = data.height/3
-    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="dark green")
+    canvas.create_rectangle(data.width/2-width, data.height/2-height,\
+                data.width/2+width, data.height/2+height, fill="dark green")
     
     canvas.create_text(data.width/2, data.height/2-120, \
                         text="You Win!", font="Times 32", fill="white")
@@ -848,7 +835,8 @@ def leaderboardTimerFired(data):
 def leaderboardRedrawAll(canvas,data):
     width = data.width/3
     height = data.height/3
-    canvas.create_rectangle(data.width/2-width, data.height/2-height, data.width/2+width, data.height/2+height, fill="dark green")
+    canvas.create_rectangle(data.width/2-width, data.height/2-height,\
+                data.width/2+width, data.height/2+height, fill="dark green")
     contents = readFile("Leaderboard.txt")
     canvas.create_text(data.width/2-width+40, data.height/2-data.height/4,\
                     anchor=NW, text=contents, font="Herculanum 20",\
@@ -862,20 +850,37 @@ def leaderboardRedrawAll(canvas,data):
 
     
 def hitsWall(data):
+    
     for wallBlock in data.walls:
+        left = data.pixel*wallBlock.left+data.sX
+        right = data.pixel*wallBlock.right+data.sX
+        top = data.pixel*wallBlock.top+data.sY
+        bottom = data.pixel*wallBlock.bottom+data.sY
         #hit from the left,right,below,above respectively
         #right-->(block is on the right of the player)
-        if (data.pixel*wallBlock.left + data.sX <= data.player.x-data.player.r <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y <= data.pixel*wallBlock.bottom + data.sY) or\
-         (data.pixel*wallBlock.left + data.sX <= data.player.x+data.player.r <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y <= data.pixel*wallBlock.bottom + data.sY) or\
-         (data.pixel*wallBlock.left + data.sX <= data.player.x <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y-data.player.r <= data.pixel*wallBlock.bottom + data.sY) or\
-         (data.pixel*wallBlock.left + data.sX <= data.player.x <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.player.y+data.player.r <= data.pixel*wallBlock.bottom + data.sY):
+        if (left <= data.player.x-data.player.r <= right and \
+            top <= data.player.y <= bottom) or\
+            (left <= data.player.x+data.player.r <= right and \
+            top <= data.player.y <= bottom) or\
+            (left <= data.player.x <= right and\
+            top <= data.player.y-data.player.r <= bottom) or\
+            (left <= data.player.x <= right and\
+            top <= data.player.y+data.player.r <= bottom):
             return True
     return False
     
 def bulletHitsWall(bullet, data):
     for wallBlock in data.walls:
-        if (data.pixel*wallBlock.left + data.sX <= data.sX + data.pixel*bullet.cx <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.sY + data.pixel*bullet.cy <= data.pixel*wallBlock.bottom + data.sY) or\
-         (data.pixel*wallBlock.left + data.sX <= data.sX + data.pixel*bullet.cx <= data.pixel*wallBlock.right + data.sX and data.pixel*wallBlock.top + data.sY <= data.sY+ data.pixel*bullet.cy <= data.pixel*wallBlock.bottom + data.sY):
+        left = data.pixel*wallBlock.left+data.sX
+        right = data.pixel*wallBlock.right+data.sX
+        top = data.pixel*wallBlock.top+data.sY
+        bottom = data.pixel*wallBlock.bottom+data.sY
+        
+        if (left <= data.sX +\
+        data.pixel*bullet.cx <= right and \
+        top <= data.sY + data.pixel*bullet.cy <= bottom) or\
+        (left <= data.sX + data.pixel*bullet.cx <= right and\
+        top <= data.sY+data.pixel*bullet.cy <= bottom):
             return True
     return False
     
